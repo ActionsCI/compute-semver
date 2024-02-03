@@ -47,12 +47,18 @@ runs:
 
           # Construct new version based on whether a JIRA card ID is present
           if [[ "$jiraCardID" == "0" ]]; then
-            # If no JIRA card ID is found, use a default behavior or format
-            baseVersion="${latestVersion}-feature-${shortSHA}"
+            # If no JIRA card ID is found, append short SHA as build metadata
+            newVersion="${latestVersion}+${shortSHA}"
           else
-            # If a JIRA card ID is found, proceed as originally planned
-            baseVersion="${latestVersion}-${jiraCardID}-${shortSHA}"
+            # If a JIRA card ID is found, append it as pre-release information and short SHA as build metadata
+            newVersion="${latestVersion}-${jiraCardID}+${shortSHA}"
           fi
+
+          while git tag | grep -q "^$newVersion$"; do
+            suffix=${newVersion##*+}
+            suffix=$((suffix+1)) # Increment the build metadata
+            newVersion="${latestVersion}-${jiraCardID}+${suffix}"
+          done
 
           newVersion=$baseVersion
           while git tag | grep -q "^$newVersion"; do
