@@ -17,14 +17,18 @@ runs:
     - name: Compute and Validate Version
       shell: bash
       run: |
-        # Fetch tags and determine the latest version tag
         # At the start of your bash script
         if [[ -n "${{ inputs.test_version_tag }}" ]]; then
           latestVersion="${{ inputs.test_version_tag }}"
         else
           git fetch --tags
           latestTag=$(git tag | grep '^v' | sort -V | tail -n 1)
-          latestVersion=${latestTag#v}
+          if [ -z "$latestTag" ]; then
+            # Default to 0.1.0 if no tags are found
+            latestVersion="0.1.0"
+          else
+            latestVersion=${latestTag#v}
+          fi
         fi
 
         # Get current branch name
@@ -38,11 +42,18 @@ runs:
           newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
         else
           # Extract Jira card ID and short SHA for other branches
-          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+')
+          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+' || echo "0")
           shortSHA=$(git rev-parse --short HEAD)
 
-          # Construct new version and check if it needs to be incremented
-          baseVersion="${latestVersion}-${jiraCardID}-${shortSHA}"
+          # Construct new version based on whether a JIRA card ID is present
+          if [[ "$jiraCardID" == "0" ]]; then
+            # If no JIRA card ID is found, use a default behavior or format
+            baseVersion="${latestVersion}-feature-${shortSHA}"
+          else
+            # If a JIRA card ID is found, proceed as originally planned
+            baseVersion="${latestVersion}-${jiraCardID}-${shortSHA}"
+          fi
+
           newVersion=$baseVersion
           while git tag | grep -q "^$newVersion"; do
             suffix=${newVersion##*.}
@@ -76,3 +87,4 @@ runs:
 
         echo "Computed Version: $newVersion"
         echo "::set-output name=version::$newVersion"
+
