@@ -1,0 +1,78 @@
+name: 'Compute Version'
+description: 'Compute version based on branch name and git tags'
+inputs:
+  test_version_tag:
+    description: 'Optional test version tag for testing purposes'
+    required: false
+    default: ''
+outputs:
+  version:
+    description: 'The computed version string'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Compute and Validate Version
+      shell: bash
+      run: |
+        # Fetch tags and determine the latest version tag
+        # At the start of your bash script
+        if [[ -n "${{ inputs.test_version_tag }}" ]]; then
+          latestVersion="${{ inputs.test_version_tag }}"
+        else
+          git fetch --tags
+          latestTag=$(git tag | grep '^v' | sort -V | tail -n 1)
+          latestVersion=${latestTag#v}
+        fi
+
+        # Get current branch name
+        branchName=$(git rev-parse --abbrev-ref HEAD)
+
+        # Check if it's a release branch
+        if [[ "$branchName" == "release/"* ]]; then
+          # Increment patch version for release branch
+          IFS='.' read -ra VER <<< "$latestVersion"
+          ((VER[2]++))
+          newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
+        else
+          # Extract Jira card ID and short SHA for other branches
+          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+')
+          shortSHA=$(git rev-parse --short HEAD)
+
+          # Construct new version and check if it needs to be incremented
+          baseVersion="${latestVersion}-${jiraCardID}-${shortSHA}"
+          newVersion=$baseVersion
+          while git tag | grep -q "^$newVersion"; do
+            suffix=${newVersion##*.}
+            ((suffix++))
+            newVersion="${baseVersion}.${suffix}"
+          done
+        fi
+
+        # Regular Expressions for validation
+        semverRegex='^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[a-zA-Z\d-]+(\.[a-zA-Z\d-]+)*)?(\+[a-zA-Z\d-]+(\.[a-zA-Z\d-]+)*)?$'
+        dockerTagRegex='^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$'
+        ociTagRegex='^[a-zA-Z0-9]+[a-zA-Z0-9._-]{0,127}$' # Modify as per OCI standards if different
+
+        # Validate SemVer
+        if ! [[ $newVersion =~ $semverRegex ]]; then
+          echo "Error: Version $newVersion is not a valid Semantic Versioning 2.0 format"
+          exit 1
+        fi
+
+        # Validate Docker Tag
+        if ! [[ $newVersion =~ $dockerTagRegex ]]; then
+          echo "Error: Version $newVersion is not a valid Docker tag format"
+          exit 1
+        fi
+
+        # Validate OCI Tag
+        if ! [[ $newVersion =~ $ociTagRegex ]]; then
+          echo "Error: Version $newVersion is not a valid OCI tag format"
+          exit 1
+        fi
+
+        echo "Computed Version: $newVersion"
+        echo "::set-output name=version::$newVersion"
