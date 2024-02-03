@@ -1,5 +1,10 @@
 name: 'Compute Version'
 description: 'Compute version based on branch name and git tags'
+inputs:
+  test_version_tag:
+    description: 'Optional test version tag for testing purposes'
+    required: false
+    default: ''
 outputs:
   version:
     description: 'The computed version string'
