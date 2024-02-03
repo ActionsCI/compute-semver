@@ -17,7 +17,7 @@ runs:
     - name: Compute and Validate Version
       shell: bash
       run: |
-        # At the start of your bash script
+        # Correctly initialize latestVersion based on the test_version_tag input or git tags
         if [[ -n "${{ inputs.test_version_tag }}" ]]; then
           latestVersion="${{ inputs.test_version_tag }}"
         else
@@ -34,7 +34,7 @@ runs:
         # Get current branch name
         branchName=$(git rev-parse --abbrev-ref HEAD)
 
-        # Check if it's a release branch
+        # Logic for release branches and non-release branches
         if [[ "$branchName" == "release/"* ]]; then
           # Increment patch version for release branch
           IFS='.' read -ra VER <<< "$latestVersion"
@@ -42,50 +42,33 @@ runs:
           newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
         else
           # Extract Jira card ID and short SHA for other branches
-          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+' || echo "0")
+          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+' || echo "")
           shortSHA=$(git rev-parse --short HEAD)
 
-          # Construct new version based on whether a JIRA card ID is present
-          if [[ "$jiraCardID" == "0" ]]; then
-            # If no JIRA card ID is found, append short SHA as build metadata
+          if [[ -z "$jiraCardID" ]]; then
+            # Use only short SHA as build metadata if no JIRA card ID
             newVersion="${latestVersion}+${shortSHA}"
           else
-            # If a JIRA card ID is found, append it as pre-release information and short SHA as build metadata
+            # Append JIRA card ID and short SHA as build metadata
             newVersion="${latestVersion}-${jiraCardID}+${shortSHA}"
           fi
-
-          while git tag | grep -q "^$newVersion$"; do
-            suffix=${newVersion##*+}
-            suffix=$((suffix+1)) # Increment the build metadata
-            newVersion="${latestVersion}-${jiraCardID}+${suffix}"
-          done
-
-          newVersion=$baseVersion
-          while git tag | grep -q "^$newVersion"; do
-            suffix=${newVersion##*.}
-            ((suffix++))
-            newVersion="${baseVersion}.${suffix}"
-          done
         fi
 
-        # Regular Expressions for validation
+        # Validation against SemVer, Docker Tag, and OCI Tag regex
         semverRegex='^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[a-zA-Z\d-]+(\.[a-zA-Z\d-]+)*)?(\+[a-zA-Z\d-]+(\.[a-zA-Z\d-]+)*)?$'
         dockerTagRegex='^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$'
-        ociTagRegex='^[a-zA-Z0-9]+[a-zA-Z0-9._-]{0,127}$' # Modify as per OCI standards if different
+        ociTagRegex='^[a-zA-Z0-9]+[a-zA-Z0-9._-]{0,127}$'
 
-        # Validate SemVer
         if ! [[ $newVersion =~ $semverRegex ]]; then
           echo "Error: Version $newVersion is not a valid Semantic Versioning 2.0 format"
           exit 1
         fi
 
-        # Validate Docker Tag
         if ! [[ $newVersion =~ $dockerTagRegex ]]; then
           echo "Error: Version $newVersion is not a valid Docker tag format"
           exit 1
         fi
 
-        # Validate OCI Tag
         if ! [[ $newVersion =~ $ociTagRegex ]]; then
           echo "Error: Version $newVersion is not a valid OCI tag format"
           exit 1
@@ -93,4 +76,3 @@ runs:
 
         echo "Computed Version: $newVersion"
         echo "::set-output name=version::$newVersion"
-
