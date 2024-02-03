@@ -49,7 +49,7 @@ runs:
           # No JIRA card ID found, use short SHA only. Otherwise, append JIRA card ID
           if [[ -z "$jiraCardID" ]]; then 
             # Use only short SHA as build metadata if no JIRA card ID
-            newVersion="${latestVersion}-${shortSHA}"
+            newVersion="${latestVersion}+${shortSHA}"
           else
             # Append JIRA card ID and short SHA as build metadata
             newVersion="${latestVersion}-${jiraCardID}+${shortSHA}"
