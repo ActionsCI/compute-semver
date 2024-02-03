@@ -18,63 +18,48 @@ runs:
       shell: bash
       run: |
         # Correctly initialize latestVersion based on the test_version_tag input or git tags
-        # fetch all release tags. Releases are prefixed with 'v' as in 'v$MAJOR.$MINOR.$PATCH'
-        if [[ -n "${{ inputs.test_version_tag }}" ]]; then
-          latestVersion="${{ inputs.test_version_tag }}"
-        else
-          git fetch --tags
-          latestTag=$(git tag | grep '^v' | sort -V | tail -n 1)
-          if [ -z "$latestTag" ]; then
-            # Default to 0.1.0 if no tags are found
-            latestVersion="0.1.0"
-          else
-            latestVersion=${latestTag#v}
-          fi
-        fi
+if [[ -n "${{ inputs.test_version_tag }}" ]]; then
+  latestVersion="${{ inputs.test_version_tag }}"
+else
+  git fetch --tags
+  latestTag=$(git tag --sort=-v:refname | grep '^v' | head -n 1)
+  if [ -z "$latestTag" ]; then
+    # Default to 0.1.0 if no tags are found
+    latestVersion="0.1.0"
+    initialBuildNumber=1
+  else
+    latestVersion=${latestTag#v}
+    # Extract build number from the latest tag if present
+    if [[ "$latestTag" =~ \+sha\.([0-9]+)$ ]]; then
+      initialBuildNumber=$((${BASH_REMATCH[1]} + 1))
+    else
+      initialBuildNumber=1
+    fi
+  fi
+fi
 
-        # Get current branch name
-        branchName=$(git rev-parse --abbrev-ref HEAD)
+# Get current branch name
+branchName=$(git rev-parse --abbrev-ref HEAD)
 
-        # Logic for release branches and non-release branches
-        if [[ "$branchName" == "release/"* ]]; then
-          # Increment patch version for release branch
-          IFS='.' read -ra VER <<< "$latestVersion"
-          ((VER[2]++))
-          newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
-        else # feature, bugfix, hotfix, etc.
-          # Extract Jira card ID and short SHA for other branches (e.g. feature/jira1234)
-          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+' || echo "")
-          shortSHA=$(git rev-parse --short HEAD)
+# Determine versioning strategy based on branch type
+if [[ "$branchName" == "release/"* ]]; then
+  # Increment patch version for release branch
+  IFS='.' read -ra VER <<< "$latestVersion"
+  ((VER[2]++))
+  newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
+elif [[ "$branchName" =~ feature/ ]]; then
+  # Handle feature branches
+  jiraCardID=$(echo $branchName | grep -oP '(?<=feature/)[A-Z]+-\d+' || echo "")
+  if [[ -n "$jiraCardID" ]]; then
+    newVersion="${latestVersion}-${jiraCardID}+sha.${initialBuildNumber}"
+  else
+    newVersion="${latestVersion}+sha.${initialBuildNumber}"
+  fi
+else
+  # For other types of branches, just use the base version and initial build number
+  newVersion="${latestVersion}+sha.${initialBuildNumber}"
+fi
 
-          # No JIRA card ID found, use short SHA only. Otherwise, append JIRA card ID
-          if [[ -z "$jiraCardID" ]]; then 
-            # Use only short SHA as build metadata if no JIRA card ID
-            newVersion="${latestVersion}+${shortSHA}"
-          else
-            # Append JIRA card ID and short SHA as build metadata
-            newVersion="${latestVersion}-${jiraCardID}+${shortSHA}"
-          fi
-        fi
-
-        # Validation against SemVer, Docker Tag, and OCI Tag regex
-        semverRegex='^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[a-zA-Z\d-]+(\.[a-zA-Z\d-]+)*)?(\+[a-zA-Z\d-]+(\.[a-zA-Z\d-]+)*)?$'
-        dockerTagRegex='^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$'
-        ociTagRegex='^[a-zA-Z0-9]+[a-zA-Z0-9._-]{0,127}$'
-
-        if ! [[ $newVersion =~ $semverRegex ]]; then
-          echo "Error: Version $newVersion is not a valid Semantic Versioning 2.0 format"
-          exit 1
-        fi
-
-        if ! [[ $newVersion =~ $dockerTagRegex ]]; then
-          echo "Error: Version $newVersion is not a valid Docker tag format"
-          exit 1
-        fi
-
-        if ! [[ $newVersion =~ $ociTagRegex ]]; then
-          echo "Error: Version $newVersion is not a valid OCI tag format"
-          exit 1
-        fi
-
-        echo "Computed Version: $newVersion"
-        echo "::set-output name=version::$newVersion"
+# Output the computed version
+echo "Computed Version: $newVersion"
+echo "::set-output name=version::$newVersion"
