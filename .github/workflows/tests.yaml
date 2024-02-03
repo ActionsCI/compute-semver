@@ -10,7 +10,7 @@ jobs:
         version_tag: ['1.2.3', '1.2.3-alpha.1', '1.2.3+20210101', '1.2.3-alpha.1+20210101']
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Run Compute Version Action with Test Version Tag
       uses: ./.github/actions/compute-version # Adjust the path to where your action is defined
