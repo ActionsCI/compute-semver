@@ -13,9 +13,14 @@ runs:
       shell: bash
       run: |
         # Fetch tags and determine the latest version tag
-        git fetch --tags
-        latestTag=$(git tag | grep '^v' | sort -V | tail -n 1)
-        latestVersion=${latestTag#v}
+        # At the start of your bash script
+        if [[ -n "${{ inputs.test_version_tag }}" ]]; then
+          latestVersion="${{ inputs.test_version_tag }}"
+        else
+          git fetch --tags
+          latestTag=$(git tag | grep '^v' | sort -V | tail -n 1)
+          latestVersion=${latestTag#v}
+        fi
 
         # Get current branch name
         branchName=$(git rev-parse --abbrev-ref HEAD)
