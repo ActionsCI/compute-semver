@@ -18,6 +18,7 @@ runs:
       shell: bash
       run: |
         # Correctly initialize latestVersion based on the test_version_tag input or git tags
+        # fetch all release tags. Releases are prefixed with 'v' as in 'v$MAJOR.$MINOR.$PATCH'
         if [[ -n "${{ inputs.test_version_tag }}" ]]; then
           latestVersion="${{ inputs.test_version_tag }}"
         else
@@ -40,14 +41,15 @@ runs:
           IFS='.' read -ra VER <<< "$latestVersion"
           ((VER[2]++))
           newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
-        else
-          # Extract Jira card ID and short SHA for other branches
+        else # feature, bugfix, hotfix, etc.
+          # Extract Jira card ID and short SHA for other branches (e.g. feature/jira1234)
           jiraCardID=$(echo $branchName | grep -oP '(?<=feature/jira)\d+' || echo "")
           shortSHA=$(git rev-parse --short HEAD)
 
-          if [[ -z "$jiraCardID" ]]; then
+          # No JIRA card ID found, use short SHA only. Otherwise, append JIRA card ID
+          if [[ -z "$jiraCardID" ]]; then 
             # Use only short SHA as build metadata if no JIRA card ID
-            newVersion="${latestVersion}+${shortSHA}"
+            newVersion="${latestVersion}-${shortSHA}"
           else
             # Append JIRA card ID and short SHA as build metadata
             newVersion="${latestVersion}-${jiraCardID}+${shortSHA}"
