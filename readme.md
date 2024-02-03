@@ -11,7 +11,7 @@ jobs:
   versioning:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ActionsCI/ComputeVersion@main
       id: compute_version
     - run: echo "Computed Version: ${{ steps.compute_version.outputs.version }}"
@@ -66,8 +66,8 @@ jobs:
   compute-version:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: ActionsCI/ComputeVersion@main
+    - uses: actions/checkout@v3
+    - uses: ActionsCI/ComputeVersion@1.0.0
       id: compute_version
     - run: echo "Feature version: ${{ steps.compute_version.outputs.version }}"
 ```
