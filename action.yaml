@@ -38,14 +38,21 @@ runs:
         echo "Checking for version tags..."
         tagCount=$(git tag --list 'v*' | wc -l)
         echo "Number of version tags found: $tagCount"
-        if [[ "$tagCount" -eq 0 ]]; then
-          echo "No version tags found in the repository."
-          latestVersion="0.1.0" # SemVer initial version.
-          initialVersion=true
+
+        # Use the input test version if provided, otherwise look up the version
+        if [[ -n "${{ inputs.test_version }}" ]]; then
+          latestVersion="${{ inputs.test_version }}"
+          echo "Using input test version: $latestVersion"
         else
-          latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
-          echo "Latest release version: $latestReleaseVersion"
-          latestVersion="$latestReleaseVersion"
+          if [[ "$tagCount" -eq 0 ]]; then
+            echo "No version tags found in the repository."
+            latestVersion="0.1.0" # SemVer initial version.
+            initialVersion=true
+          else
+            latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
+            echo "Latest release version: $latestReleaseVersion"
+            latestVersion="$latestReleaseVersion"
+          fi
         fi
         echo "Latest version: $latestVersion, initial version: $initialVersion"
 
