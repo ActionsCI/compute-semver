@@ -151,12 +151,12 @@ runs:
         if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
           nextBuildNumber=$((currentBuildNumber + 1))
         else
-          nextBuildNumber=''
+          nextBuildNumber='1'
         fi
         echo "Next build number: $nextBuildNumber"
 
         # Correctly construct newVersion
-        if [[ "$branchName" == "release/"* && -z "$nextBuildNumber" ]]; then
+        if [[ "$branchName" == "release/"* && -z "$currentBuildNumber" ]]; then
           newVersion="${nextBaseVersion}"  # No build number for the initial release build
         else
           newVersion="${nextBaseVersion}${versionPostfixTemplate}+${nextBuildNumber}"  # Append build number correctly for all cases
