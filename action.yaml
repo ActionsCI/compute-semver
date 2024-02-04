@@ -151,7 +151,7 @@ runs:
         if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
           nextBuildNumber=$((currentBuildNumber + 1))
         else
-          nextBuildNumber=1
+          nextBuildNumber=''
         fi
         echo "Next build number: $nextBuildNumber"
 
