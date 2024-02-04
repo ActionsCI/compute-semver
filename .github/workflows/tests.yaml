@@ -6,7 +6,7 @@ jobs:
   test-version-calculation:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         branch_type: ['feature', 'develop', 'release', 'bugfix', 'alpha', 'beta']
         jira_card: ['', 'JIRA-123']

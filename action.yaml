@@ -29,35 +29,39 @@ runs:
         latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
         if [[ -z "$latestReleaseVersion" ]]; then
           latestVersion="0.1.0" # SemVer initial version.
+          initialVersion=true
         else
           latestVersion="$latestReleaseVersion"
         fi
 
         # Extracting the short SHA from the latest commit
         shortSHA=$(git rev-parse --short HEAD)
-
-        # Initialize base version for new work
-        IFS='.' read -ra VER <<< "$latestVersion"
-        ((VER[2]++))
-        baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
-
+        if [[ ! $initialVersion ]]; then
+          # Initialize base version for new work
+          IFS='.' read -ra VER <<< "$latestVersion"
+          ((VER[2]++))
+          baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
+        else
+          baseVersion="${latestVersion}"
+        fi
         # Construct version template based on branch type
-        versionTemplate="${baseVersion}-"
+        versionPostfixTemplate=""
+
         case "$branchName" in
           feature/*|bugfix/*|alpha/*|beta/*)
             jiraCardID=$(echo $branchName | grep -oP '(?<=/)[A-Z]+-\d+' || echo "")
             if [[ -n "$jiraCardID" ]]; then
-              versionTemplate+="${branchName%%/*}.${jiraCardID}.${shortSHA}"
+              versionPostfixTemplate+="-${branchName%%/*}.${jiraCardID}.${shortSHA}"
             else
-              versionTemplate+="${branchName%%/*}.${shortSHA}"
+              versionPostfixTemplate+="-${branchName%%/*}.${shortSHA}"
             fi
             ;;
           develop*)
-            versionTemplate="${baseVersion}-develop"
+            versionPostfixTemplate="${baseVersion}-develop.${shortSHA}"
             ;;
           release*)
             # Directly use baseVersion for release branches; build number will be appended later if needed
-            versionTemplate="${baseVersion}"
+            versionPostfixTemplate="${baseVersion}"
             ;;
           *)
             versionTemplate+="${branchName%%/*}.${shortSHA}" # Default case for any other branch types
@@ -81,7 +85,7 @@ runs:
           else
             buildNumber=1
           fi
-          newVersion="${versionTemplate}+${buildNumber}"  # Append build number for non-release branches
+          newVersion="${baseVersion}${versionTemplate}+${buildNumber}"  # Append build number for non-release branches
         fi
 
         # Output the computed version
