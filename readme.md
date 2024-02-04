@@ -52,26 +52,20 @@ jobs:
         
     - name: Use Computed Version
       run: echo "The computed version is ${{ steps.compute_version.outputs.version }}"
-Handling Different Branch Types
+```
+## Handling Different Branch Types
 Release Branches
 For release branches (e.g., release/1.2.3), the action will increment the patch version by default.
 
-Feature Branches
-For feature branches, especially those not following a strict naming convention, the action will generate a version string incorporating the short SHA commit hash to ensure uniqueness.
+### Feature Branches
+For feature branches, especially those not following a strict naming convention, the action will generate a version string 
+incorporating the short SHA commit hash to ensure uniqueness.
 
-Contributing
+## Contributing
 We welcome contributions and suggestions to improve this action. Please follow the contributing guidelines in the repository.
 
-Support and Issues
+## Support and Issues
 If you encounter any issues or require assistance, please file an issue on the GitHub repository issue tracker.
 
 License
 This action is released under the MIT License. See the LICENSE file for more details.
-
-markdown
-Copy code
-
-### Notes for Customization:
-- **Repository URL and Action Name**: Replace `ActionsCI/ComputeVersion@main` with the actual GitHub path to your action if it differs.
-- **Contribution Guidelines**: If you have specific contribution guidelines, mention them or link to the file in the repository.
-- **License Information**: Ensure the license link (`[LICENSE](LICENSE)`) points to the correct license file in your repository.

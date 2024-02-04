@@ -21,52 +21,69 @@ runs:
     - name: Compute and Validate Version
       shell: bash
       run: |
-        # Correctly initialize latestVersion based on the test_version_tag input or git tags
-        if [[ -n "${{ inputs.test_version_tag }}" ]]; then
-          latestVersion="${{ inputs.test_version_tag }}"
-        else
-          git fetch --tags
-          latestTag=$(git tag --sort=-v:refname | grep '^v' | head -n 1)
-          if [ -z "$latestTag" ]; then
-            # Default to 0.1.0 if no tags are found
-            latestVersion="0.1.0"
-            initialBuildNumber=1
-          else
-            latestVersion=${latestTag#v}
-            # Extract build number from the latest tag if present
-            if [[ "$latestTag" =~ \+sha\.([0-9]+)$ ]]; then
-              initialBuildNumber=$((${BASH_REMATCH[1]} + 1))
-            else
-              initialBuildNumber=1
-            fi
-          fi
-        fi
-
-        # Use test branch name if provided, otherwise get the current branch name
+        # Initialize variables
         branchName="${{ inputs.test_branch_name }}"
         if [[ -z "$branchName" ]]; then
           branchName=$(git rev-parse --abbrev-ref HEAD)
         fi
+        latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
+        if [[ -z "$latestReleaseVersion" ]]; then
+          latestVersion="0.1.0" # SemVer initial version.
+        else
+          latestVersion="$latestReleaseVersion"
+        fi
 
-        # Determine versioning strategy based on branch type
+        # Extracting the short SHA from the latest commit
+        shortSHA=$(git rev-parse --short HEAD)
+
+        # Initialize base version for new work
+        IFS='.' read -ra VER <<< "$latestVersion"
+        ((VER[2]++))
+        baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
+
+        # Construct version template based on branch type
+        versionTemplate="${baseVersion}-"
+        case "$branchName" in
+          feature/*|bugfix/*|alpha/*|beta/*)
+            jiraCardID=$(echo $branchName | grep -oP '(?<=/)[A-Z]+-\d+' || echo "")
+            if [[ -n "$jiraCardID" ]]; then
+              versionTemplate+="${branchName%%/*}.${jiraCardID}.${shortSHA}"
+            else
+              versionTemplate+="${branchName%%/*}.${shortSHA}"
+            fi
+            ;;
+          develop*)
+            versionTemplate="${baseVersion}-develop"
+            ;;
+          release*)
+            # Directly use baseVersion for release branches; build number will be appended later if needed
+            versionTemplate="${baseVersion}"
+            ;;
+          *)
+            versionTemplate+="${branchName%%/*}.${shortSHA}" # Default case for any other branch types
+            ;;
+        esac
+
+        # Determine the next build number and adjust newVersion accordingly
+        regexToMatch="${versionTemplate//./\\.}+([0-9]+)$" # Escaping dots for regex matching and preparing to capture build number
+        currentBuildNumber=$(git tag --list | grep -P "$regexToMatch" | sed 's/^.*+\([0-9]\+\)$/\1/' | sort -nr | head -n 1)
+
         if [[ "$branchName" == "release/"* ]]; then
-          # Increment patch version for release branch
-          IFS='.' read -ra VER <<< "$latestVersion"
-          ((VER[2]++))
-          newVersion="${VER[0]}.${VER[1]}.${VER[2]}"
-        elif [[ "$branchName" =~ feature/ ]]; then
-          # Handle feature branches
-          jiraCardID=$(echo $branchName | grep -oP '(?<=feature/)[A-Z]+-\d+' || echo "")
-          if [[ -n "$jiraCardID" ]]; then
-            newVersion="${latestVersion}-${jiraCardID}+sha.${initialBuildNumber}"
+          if [[ -n "$currentBuildNumber" ]]; then # If a build number is found, increment it
+            buildNumber=$((currentBuildNumber + 1))
+            newVersion="${baseVersion}+${buildNumber}"  # Append build number for subsequent release builds
           else
-            newVersion="${latestVersion}+sha.${initialBuildNumber}"
+            newVersion="${baseVersion}"  # No build number for the initial release build
           fi
         else
-          # For other types of branches, just use the base version and initial build number
-          newVersion="${latestVersion}+sha.${initialBuildNumber}"
+          if [[ -n "$currentBuildNumber" ]]; then
+            buildNumber=$((currentBuildNumber + 1))
+          else
+            buildNumber=1
+          fi
+          newVersion="${versionTemplate}+${buildNumber}"  # Append build number for non-release branches
         fi
 
         # Output the computed version
         echo "Computed Version: $newVersion"
-        echo "::set-output name=version::$newVersion"
+        echo "version=${newVersion}" >> $GITHUB_OUTPUT
