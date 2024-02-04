@@ -3,16 +3,14 @@ name: Comprehensive Version Calculation Tests
 on: [push]
 
 jobs:
-  test-version-calculation:
+  test-semver:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        branch_type: ['feature', 'develop', 'release']
-        # branch_type: ['feature', 'develop', 'release', 'bugfix', 'alpha', 'beta']
+        branch_type: ['feature', 'develop', 'release', 'bugfix', 'alpha', 'beta']
         jira_card: ['', 'JIRA-123']
-        test_version: [ '1.2.3', '0.1.2-preRlease+1']
-        # test_version: ['0.1.0', '1.2.3', '0.1.2-preRlease+1', '1.0.0-alpha', '1.0.0+20210101', '1.0.0-alpha+20210101']
+        test_version: ['0.1.0', '1.2.3', '0.1.2', '1.0.0', '1.2.4+1']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
