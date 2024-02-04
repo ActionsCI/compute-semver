@@ -23,6 +23,16 @@ runs:
       shell: bash
       id: compute-version
       run: |
+        # echo out test vars for debugging
+        echo "test_version_tag: ${{ inputs.test_version_tag }}"
+        echo "test_branch_name: ${{ inputs.test_branch_name }}"
+        #if test vars set then set test_mode=true
+        if [[ -n "${{ inputs.test_version_tag }}" || -n "${{ inputs.test_branch_name }}" ]]; then
+          test_mode=true
+        else
+          test_mode=false
+        fi
+
         # Initialize variables
         initialVersion=false
         echo "Initial version set to false"
@@ -62,8 +72,9 @@ runs:
         shortSHA=$(git rev-parse --short HEAD)
         echo "Short SHA: $shortSHA"
 
-        # Initialize base version for new work
+        # Increment base version for new work
         if [[ "$initialVersion" == true ]]; then
+          echo "setting base version to latest version"
           baseVersion="${latestVersion}"
         else
           IFS='.' read -ra VER <<< "$latestVersion"
