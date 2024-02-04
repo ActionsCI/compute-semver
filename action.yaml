@@ -81,6 +81,7 @@ runs:
           echo "setting base version to latest version"
           baseVersion="${latestVersion}"
         else
+          echo "Incrementing base version for new work..."
           IFS='.' read -ra VER <<< "$latestVersion"
           ((VER[2]++))
           baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
