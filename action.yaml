@@ -5,6 +5,10 @@ inputs:
     description: 'Optional test version tag for testing purposes'
     required: false
     default: ''
+  test_branch_name:
+    description: 'Optional test branch name for testing purposes'
+    required: false
+    default: ''
 outputs:
   version:
     description: 'The computed version string'
@@ -38,8 +42,11 @@ runs:
           fi
         fi
 
-        # Get current branch name
-        branchName=$(git rev-parse --abbrev-ref HEAD)
+        # Use test branch name if provided, otherwise get the current branch name
+        branchName="${{ inputs.test_branch_name }}"
+        if [[ -z "$branchName" ]]; then
+          branchName=$(git rev-parse --abbrev-ref HEAD)
+        fi
 
         # Determine versioning strategy based on branch type
         if [[ "$branchName" == "release/"* ]]; then
