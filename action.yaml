@@ -43,7 +43,7 @@ runs:
           latestVersion="0.1.0" # SemVer initial version.
           initialVersion=true
         else
-          latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//') 
+          latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
           echo "Latest release version: $latestReleaseVersion"
           latestVersion="$latestReleaseVersion"
         fi
@@ -53,13 +53,13 @@ runs:
         shortSHA=$(git rev-parse --short HEAD)
         echo "Short SHA: $shortSHA"
 
-        if [[ $initialVersion == false ]]; then
+        if [[ "$initialVersion" == true ]]; then
+          baseVersion="${latestVersion}"
+        else
           # Initialize base version for new work
           IFS='.' read -ra VER <<< "$latestVersion"
           ((VER[2]++))
           baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
-        else
-          baseVersion="${latestVersion}"
         fi
         echo "Base version for new work: $baseVersion"
 
@@ -88,7 +88,7 @@ runs:
         esac
         echo "Version postfix template: $versionPostfixTemplate"
 
-        # Correct regexToMatch construction error
+        # Construct the regex for matching existing tags
         regexToMatch="${baseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
         echo "Regex to match: $regexToMatch"
 
