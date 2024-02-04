@@ -21,6 +21,7 @@ runs:
 
     - name: Compute and Validate Version
       shell: bash
+      id: compute-version
       run: |
         # Initialize variables
         initialVersion=false
