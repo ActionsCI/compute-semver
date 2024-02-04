@@ -89,24 +89,29 @@ runs:
         echo "Version postfix template: $versionPostfixTemplate"
 
         # Construct the regex for matching existing tags
+        echo "Constructing regex to match existing build numbers..."
         regexToMatch="${baseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
         echo "Regex to match: $regexToMatch"
 
-        # Fetch and filter matching tags, then determine the highest build number
-        matchingTags=$(git tag --list | grep -P "$regexToMatch")
+        # Ensure to assign a value to `matchingTags` to handle cases with no tags
+        matchingTags=$(git tag --list | grep -P "$regexToMatch" || echo "")
+
         echo "Matching tags: $matchingTags"
 
+        # Use a conditional check to avoid errors when no tags are present
         if [[ -z "$matchingTags" ]]; then
           echo "No matching tags found."
           currentBuildNumber=0
         else
-          # If matching tags are found, extract the highest build number
+          echo "Matching tags found: $matchingTags"
+          # Extract the highest build number from the matching tags
           currentBuildNumber=$(echo "$matchingTags" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
         fi
+
         echo "Current build number: $currentBuildNumber"
 
-        # Determine the next build number based on whether a current build number was found
-        if [[ "$currentBuildNumber" -ge 1 ]]; then
+        # Determine the next build number
+        if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
           buildNumber=$((currentBuildNumber + 1))
         else
           buildNumber=1
