@@ -23,21 +23,28 @@ runs:
       run: |
         # Initialize variables
         initialVersion=false
+        echo "Initial version set to false"
         branchName="${{ inputs.test_branch_name }}"
         if [[ -z "$branchName" ]]; then
           branchName=$(git rev-parse --abbrev-ref HEAD)
         fi
+        echo "Branch name: $branchName"
+
         latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
+        echo "Latest release version: $latestReleaseVersion"
         if [[ -z "$latestReleaseVersion" ]]; then
           latestVersion="0.1.0" # SemVer initial version.
           initialVersion=true
         else
           latestVersion="$latestReleaseVersion"
         fi
+        echo "Latest version: $latestVersion, initial version: $initialVersion"
 
         # Extracting the short SHA from the latest commit
         shortSHA=$(git rev-parse --short HEAD)
-        if [[ ! $initialVersion ]]; then
+        echo "Short SHA: $shortSHA"
+
+        if [[ $initialVersion == false ]]; then
           # Initialize base version for new work
           IFS='.' read -ra VER <<< "$latestVersion"
           ((VER[2]++))
@@ -45,10 +52,11 @@ runs:
         else
           baseVersion="${latestVersion}"
         fi
-        
+        echo "Base version for new work: $baseVersion"
+
         # Construct version template based on branch type
-        # Corrected version template and regex match construction
         versionPostfixTemplate=""
+        echo "Starting construction of version postfix template..."
 
         case "$branchName" in
           feature/*|bugfix/*|alpha/*|beta/*)
@@ -69,19 +77,23 @@ runs:
             versionPostfixTemplate="-${branchName%%/*}.${shortSHA}"  # Default case for any other branch types
             ;;
         esac
+        echo "Version postfix template: $versionPostfixTemplate"
 
-        # Construct the regex for matching existing tags
-        regexToMatch="${baseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"  # Correctly use versionPostfixTemplate here
+        # Correct regexToMatch construction error
+        regexToMatch="${baseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
+        echo "Regex to match: $regexToMatch"
 
         # Determine the next build number
+        echo "Determining next build number..."
         currentBuildNumber=$(git tag --list | grep -P "$regexToMatch" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
+        echo "Current build number: $currentBuildNumber"
 
-        # Increment or initialize the build number
         if [[ -n "$currentBuildNumber" ]]; then
           buildNumber=$((currentBuildNumber + 1))
         else
           buildNumber=1
         fi
+        echo "Next build number: $buildNumber"
 
         # Correctly construct newVersion
         if [[ "$branchName" == "release/"* && -z "$currentBuildNumber" ]]; then
@@ -89,4 +101,5 @@ runs:
         else
           newVersion="${baseVersion}${versionPostfixTemplate}+${buildNumber}"  # Append build number correctly for all cases
         fi
-        echo "version=${newVersion}" >> $GITHUB_ENV
+        echo "Computed Version: $newVersion"
+        echo "version=${newVersion}" >> $GITHUB_OUTPUT
