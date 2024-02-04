@@ -53,17 +53,17 @@ runs:
         shortSHA=$(git rev-parse --short HEAD)
         echo "Short SHA: $shortSHA"
 
+        # Initialize base version for new work
         if [[ "$initialVersion" == true ]]; then
           baseVersion="${latestVersion}"
         else
-          # Initialize base version for new work
           IFS='.' read -ra VER <<< "$latestVersion"
           ((VER[2]++))
           baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
         fi
         echo "Base version for new work: $baseVersion"
 
-        # Construct version template based on branch type
+        # Construct version postfix template based on branch type
         versionPostfixTemplate=""
         echo "Starting construction of version postfix template..."
 
@@ -92,18 +92,14 @@ runs:
         regexToMatch="${baseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
         echo "Regex to match: $regexToMatch"
 
-        # Determine the next build number
-        echo "Determining next build number..."
-        # Fetch all tags that match the base version and postfix pattern
+        # Fetch and filter matching tags, then determine the highest build number
         matchingTags=$(git tag --list | grep -P "$regexToMatch")
         echo "Matching tags: $matchingTags"
 
-        # Check if there are any matching tags
         if [[ -z "$matchingTags" ]]; then
           echo "No matching tags found."
           currentBuildNumber=0
         else
-          echo "Matching tags found. $matchingTags"
           # If matching tags are found, extract the highest build number
           currentBuildNumber=$(echo "$matchingTags" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
         fi
