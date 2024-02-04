@@ -70,7 +70,7 @@ runs:
             latestVersion="$latestReleaseVersion"
           fi
         fi
-        echo "Latest version: $latestVersion, initial version: $initialVersion"
+        echo "Latest version: '$latestVersion', initial version: '$initialVersion'"
 
         # Extracting the short SHA from the latest commit
         shortSHA=$(git rev-parse --short HEAD)
@@ -83,8 +83,11 @@ runs:
         else
           echo "Incrementing base version for new work..."
           IFS='.' read -ra VER <<< "$latestVersion"
-          ((VER[2]++))
-          baseVersion="${VER[0]}.${VER[1]}.${VER[2]}"
+          major=$((VER[0]))
+          minor=$((VER[1]))
+          patch=$((VER[2]))
+          nextPatch=$((patch + 1))
+          baseVersion="${major}.${minor}.${nextPatch}"
         fi
         echo "Base version for new work: $baseVersion"
 
