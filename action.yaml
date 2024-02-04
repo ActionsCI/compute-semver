@@ -94,10 +94,21 @@ runs:
 
         # Determine the next build number
         echo "Determining next build number..."
-        currentBuildNumber=$(git tag --list | grep -P "$regexToMatch" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
+        # Fetch all tags that match the base version and postfix pattern
+        matchingTags=$(git tag --list | grep -P "$regexToMatch")
+
+        # Check if there are any matching tags
+        if [[ -z "$matchingTags" ]]; then
+          echo "No matching tags found."
+          currentBuildNumber=0
+        else
+          # If matching tags are found, extract the highest build number
+          currentBuildNumber=$(echo "$matchingTags" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
+        fi
         echo "Current build number: $currentBuildNumber"
 
-        if [[ -n "$currentBuildNumber" ]]; then
+        # Determine the next build number based on whether a current build number was found
+        if [[ "$currentBuildNumber" -ge 1 ]]; then
           buildNumber=$((currentBuildNumber + 1))
         else
           buildNumber=1
