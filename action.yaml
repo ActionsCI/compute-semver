@@ -76,20 +76,28 @@ runs:
         shortSHA=$(git rev-parse --short HEAD)
         echo "Short SHA: $shortSHA"
 
-        # Increment base version for new work
+        # Extract and increment the base version for new work
         if [[ "$initialVersion" == true ]]; then
-          echo "setting base version to latest version"
+          echo "Setting base version to the latest version"
           baseVersion="${latestVersion}"
         else
           echo "Incrementing base version for new work..."
-          IFS='.' read -ra VER <<< "$latestVersion"
-          major=$((VER[0]))
-          minor=$((VER[1]))
-          patch=$((VER[2]))
+          # Split the version by '+' to separate the semantic version from build metadata, if any
+          IFS='+' read -ra VERSION_SPLIT <<< "$latestVersion"
+          semanticVersion="${VERSION_SPLIT[0]}"
+
+          # Now split the semantic version to increment the patch version
+          IFS='.' read -ra VER <<< "$semanticVersion"
+          major="${VER[0]}"
+          minor="${VER[1]}"
+          patch="${VER[2]}"
+
+          # Increment the patch version
           nextPatch=$((patch + 1))
-          nextBaseVersion="${major}.${minor}.${nextPatch}"
+          baseVersion="${major}.${minor}.${nextPatch}"
         fi
-        echo "Base version for new work: $nextBaseVersion"
+        echo "Base version for new work: $baseVersion"
+
 
         # Construct version postfix template based on branch type
         versionPostfixTemplate=""
