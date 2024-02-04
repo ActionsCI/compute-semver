@@ -30,7 +30,7 @@ runs:
         fi
         echo "Branch name: $branchName"
 
-        latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
+        latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 ) 
         echo "Latest release version: $latestReleaseVersion"
         if [[ -z "$latestReleaseVersion" ]]; then
           latestVersion="0.1.0" # SemVer initial version.
