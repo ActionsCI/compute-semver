@@ -34,4 +34,4 @@ jobs:
           test_version_tag: ${{ matrix.test_version }}
 
       - name: Output Computed Version
-        run: echo "Computed version for ${{ env.TEST_BRANCH_NAME }} with version ${{ matrix.test_version }} is ${{ steps.compute_version.outputs.version }}"
+        run: echo "Computed version for ${{ env.TEST_BRANCH_NAME }} with latest release version ${{ matrix.test_version }} is '${{ steps.compute_version.outputs.version }}'"
