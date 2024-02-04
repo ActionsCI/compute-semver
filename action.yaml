@@ -30,20 +30,21 @@ runs:
         fi
         echo "Branch name: $branchName"
 
-        echo "cmd: git tag --sort=-v:refname"
-        git tag --sort=-v:refname
+        # Fetching all tags might be necessary if you haven't already fetched the tags
+        echo "Fetching all tags..."
+        git fetch --tags
 
-        echo "cmd: git tag --sort=-v:refname | grep '^v'"
-        git tag --sort=-v:refname | grep '^v'
-
-        echo "cmd: git tag --sort=-v:refname | grep '^v' | head -n 1"
-        git tag --sort=-v:refname | grep '^v' | head -n 1 
-        latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 ) 
-        echo "Latest release version: $latestReleaseVersion"
-        if [[ -z "$latestReleaseVersion" ]]; then
+        # Check if there are any version tags
+        echo "Checking for version tags..."
+        tagCount=$(git tag --list 'v*' | wc -l)
+        echo "Number of version tags found: $tagCount"
+        if [[ "$tagCount" -eq 0 ]]; then
+          echo "No version tags found in the repository."
           latestVersion="0.1.0" # SemVer initial version.
           initialVersion=true
         else
+          latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//') 
+          echo "Latest release version: $latestReleaseVersion"
           latestVersion="$latestReleaseVersion"
         fi
         echo "Latest version: $latestVersion, initial version: $initialVersion"
