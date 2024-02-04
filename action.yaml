@@ -14,6 +14,7 @@ outputs:
     description: 'The computed version string'
 runs:
   using: 'composite'
+  outputs: ['version']
   steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -132,4 +133,4 @@ runs:
           newVersion="${baseVersion}${versionPostfixTemplate}+${buildNumber}"  # Append build number correctly for all cases
         fi
         echo "Computed Version: $newVersion"
-        echo "version=${newVersion}" >> $GITHUB_OUTPUT
+        echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
