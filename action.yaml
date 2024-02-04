@@ -23,24 +23,28 @@ runs:
       shell: bash
       id: compute-version
       run: |
-        # echo out test vars for debugging
-        echo "test_version_tag: ${{ inputs.test_version_tag }}"
-        echo "test_branch_name: ${{ inputs.test_branch_name }}"
-        #if test vars set then set test_mode=true
-        if [[ -n "${{ inputs.test_version_tag }}" || -n "${{ inputs.test_branch_name }}" ]]; then
-          test_mode=true
-        else
-          test_mode=false
-        fi
-
         # Initialize variables
         initialVersion=false
-        echo "Initial version set to false"
         branchName="${{ inputs.test_branch_name }}"
         if [[ -z "$branchName" ]]; then
           branchName=$(git rev-parse --abbrev-ref HEAD)
         fi
+        
+        test_version_tag="${{ inputs.test_version_tag }}"
+        test_branch_name="${{ inputs.test_branch_name }}"
+        #if test vars set then set test_mode=true
+        if [[ -n "$test_version_tag" || -n "$test_branch_name" ]]; then
+          test_mode=true
+        else
+          test_mode=false
+        fi
+        
+        # echo out test vars for debugging
+        echo "test_version_tag: ${test_version_tag}"
+        echo "test_branch_name: ${test_branch_name}"
+        echo "Test mode: $test_mode"
         echo "Branch name: $branchName"
+
 
         # Fetching all tags might be necessary if you haven't already fetched the tags
         echo "Fetching all tags..."
