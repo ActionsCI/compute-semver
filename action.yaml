@@ -148,17 +148,17 @@ runs:
 
         # Determine the next build number
         if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
-          buildNumber=$((currentBuildNumber + 1))
+          nextBuildNumber=$((currentBuildNumber + 1))
         else
-          buildNumber=1
+          nextBuildNumber=1
         fi
-        echo "Next build number: $buildNumber"
+        echo "Next build number: $nextBuildNumber"
 
         # Correctly construct newVersion
-        if [[ "$branchName" == "release/"* && -z "$currentBuildNumber" ]]; then
+        if [[ "$branchName" == "release/"* && -z "$nextBuildNumber" ]]; then
           newVersion="${nextBaseVersion}"  # No build number for the initial release build
         else
-          newVersion="${nextBaseVersion}${versionPostfixTemplate}+${buildNumber}"  # Append build number correctly for all cases
+          newVersion="${nextBaseVersion}${versionPostfixTemplate}+${nextBuildNumber}"  # Append build number correctly for all cases
         fi
         echo "Computed Version: $newVersion"
         echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
