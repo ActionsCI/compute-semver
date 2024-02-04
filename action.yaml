@@ -12,6 +12,7 @@ inputs:
 outputs:
   version:
     description: 'The computed version string'
+    value: ${{ steps.compute-version.outputs.version }}
 runs:
   using: 'composite'
   steps:
