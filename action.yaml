@@ -22,6 +22,7 @@ runs:
       shell: bash
       run: |
         # Initialize variables
+        initialVersion=false
         branchName="${{ inputs.test_branch_name }}"
         if [[ -z "$branchName" ]]; then
           branchName=$(git rev-parse --abbrev-ref HEAD)
@@ -44,50 +45,48 @@ runs:
         else
           baseVersion="${latestVersion}"
         fi
+        
         # Construct version template based on branch type
+        # Corrected version template and regex match construction
         versionPostfixTemplate=""
 
         case "$branchName" in
           feature/*|bugfix/*|alpha/*|beta/*)
             jiraCardID=$(echo $branchName | grep -oP '(?<=/)[A-Z]+-\d+' || echo "")
             if [[ -n "$jiraCardID" ]]; then
-              versionPostfixTemplate+="-${branchName%%/*}.${jiraCardID}.${shortSHA}"
+              versionPostfixTemplate="-${branchName%%/*}.${jiraCardID}.${shortSHA}"
             else
-              versionPostfixTemplate+="-${branchName%%/*}.${shortSHA}"
+              versionPostfixTemplate="-${branchName%%/*}.${shortSHA}"
             fi
             ;;
           develop*)
-            versionPostfixTemplate="${baseVersion}-develop.${shortSHA}"
+            versionPostfixTemplate="-develop.${shortSHA}"
             ;;
           release*)
-            # Directly use baseVersion for release branches; build number will be appended later if needed
-            versionPostfixTemplate="${baseVersion}"
+            versionPostfixTemplate=""  # Empty for initial release work; build number appended later if needed
             ;;
           *)
-            versionTemplate+="${branchName%%/*}.${shortSHA}" # Default case for any other branch types
+            versionPostfixTemplate="-${branchName%%/*}.${shortSHA}"  # Default case for any other branch types
             ;;
         esac
 
-        # Determine the next build number and adjust newVersion accordingly
-        regexToMatch="${versionTemplate//./\\.}+([0-9]+)$" # Escaping dots for regex matching and preparing to capture build number
-        currentBuildNumber=$(git tag --list | grep -P "$regexToMatch" | sed 's/^.*+\([0-9]\+\)$/\1/' | sort -nr | head -n 1)
+        # Construct the regex for matching existing tags
+        regexToMatch="${baseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"  # Correctly use versionPostfixTemplate here
 
-        if [[ "$branchName" == "release/"* ]]; then
-          if [[ -n "$currentBuildNumber" ]]; then # If a build number is found, increment it
-            buildNumber=$((currentBuildNumber + 1))
-            newVersion="${baseVersion}+${buildNumber}"  # Append build number for subsequent release builds
-          else
-            newVersion="${baseVersion}"  # No build number for the initial release build
-          fi
+        # Determine the next build number
+        currentBuildNumber=$(git tag --list | grep -P "$regexToMatch" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
+
+        # Increment or initialize the build number
+        if [[ -n "$currentBuildNumber" ]]; then
+          buildNumber=$((currentBuildNumber + 1))
         else
-          if [[ -n "$currentBuildNumber" ]]; then
-            buildNumber=$((currentBuildNumber + 1))
-          else
-            buildNumber=1
-          fi
-          newVersion="${baseVersion}${versionTemplate}+${buildNumber}"  # Append build number for non-release branches
+          buildNumber=1
         fi
 
-        # Output the computed version
-        echo "Computed Version: $newVersion"
-        echo "version=${newVersion}" >> $GITHUB_OUTPUT
+        # Correctly construct newVersion
+        if [[ "$branchName" == "release/"* && -z "$currentBuildNumber" ]]; then
+          newVersion="${baseVersion}"  # No build number for the initial release build
+        else
+          newVersion="${baseVersion}${versionPostfixTemplate}+${buildNumber}"  # Append build number correctly for all cases
+        fi
+        echo "version=${newVersion}" >> $GITHUB_ENV
