@@ -29,6 +29,14 @@ runs:
           branchName=$(git rev-parse --abbrev-ref HEAD)
         fi
         echo "Branch name: $branchName"
+
+        echo "cmd: git tag --sort=-v:refname"
+        git tag --sort=-v:refname
+
+        echo "cmd: git tag --sort=-v:refname | grep '^v'"
+        git tag --sort=-v:refname | grep '^v'
+
+        echo "cmd: git tag --sort=-v:refname | grep '^v' | head -n 1"
         git tag --sort=-v:refname | grep '^v' | head -n 1 
         latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 ) 
         echo "Latest release version: $latestReleaseVersion"
