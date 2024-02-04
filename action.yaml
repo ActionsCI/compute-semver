@@ -94,9 +94,10 @@ runs:
 
           # Increment the patch version
           nextPatch=$((patch + 1))
-          baseVersion="${major}.${minor}.${nextPatch}"
+          baseVersion="${major}.${minor}.${patch}"
+          nextBaseVersion="${major}.${minor}.${nextPatch}"
         fi
-        echo "Base version for new work: $baseVersion"
+        echo "Base version for new work: $nextBaseVersion"
 
 
         # Construct version postfix template based on branch type
