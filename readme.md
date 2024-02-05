@@ -22,6 +22,7 @@ This action is particularly designed for teams following the GitFlow branching m
 | Input              | Description                                        | Required | Default |
 |--------------------|----------------------------------------------------|----------|---------|
 | `test_version_tag` | Test version tag for testing or simulation.        | No       | ''      |
+| `test_branch_name` | Test branch name for testing or simulation         | No       | ''      |
 
 ## Outputs
 
@@ -60,6 +61,8 @@ jobs:
         
       - name: Use Computed Version
         run: echo "Computed version: ${{ steps.compute_version.outputs.version }}"
+```
+
 ## Handling Different Branch Types in GitFlow
 * Feature Branches: Generate pre-release versions to indicate ongoing development.
 * Release Branches: Increment the version to the next minor or patch level, preparing for a stable release.
@@ -83,3 +86,4 @@ If you find this project helpful and would like to support its development, cons
 - **PayPal**: [Donate via PayPal.me](https://www.paypal.com/paypalme/my/profile)
 - **GitHub Sponsors**: [Become a Sponsor](YourGitHubSponsorsLink)
 - **Cryptocurrency**: Eth Address - `0xbB767477D28560672BE7b2E2270c70F80F9341eE`
+
