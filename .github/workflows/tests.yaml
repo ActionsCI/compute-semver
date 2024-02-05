@@ -9,8 +9,8 @@ jobs:
       fail-fast: true
       matrix:
         branch_type: ['feature', 'develop', 'release', 'bugfix', 'alpha', 'beta']
-        jira_card: ['', 'JIRA-123']
-        test_version: ['0.1.0', '1.2.3', '0.1.2', '1.0.0', '1.2.4+1']
+        jira_card: ['', 'JIRA-123', 'JIRA1234']
+        test_version: ['v0.1.0', 'v1.2.3', 'v0.1.2', 'v1.0.0', 'v1.2.4']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
