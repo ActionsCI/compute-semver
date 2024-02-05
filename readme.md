@@ -1,45 +1,42 @@
 # Compute Version GitHub Action
 
-"Compute Version" is a GitHub Action tailored for projects employing the GitFlow branching strategy and adhering to Semantic Versioning (SemVer). It automates version computation across CI/CD pipelines, utilizing branch names and git tags to dynamically generate version numbers at various development stages.
+"Compute Version" is a GitHub Action designed to facilitate version computation in CI/CD pipelines, leveraging branch names and git tags. This action is optimized for projects utilizing trunk-based development practices and adhering to Semantic Versioning (SemVer), dynamically generating version numbers to streamline deployments and releases.
 
-## Integrating GitFlow and SemVer
+## Trunk-Based Development and SemVer
 
-This action is particularly designed for teams following the GitFlow branching model, which involves maintaining separate branches for features, releases, and hotfixes. Combined with SemVer, it ensures that every merge into the mainline (main or master) and development (develop) branches results in a predictable and meaningful version increment.
+This action supports trunk-based development, a strategy that involves frequent merges to a single branch (often `main` or `master`). Combined with SemVer, it ensures consistent and meaningful version increments, aligning version management with continuous integration principles.
 
 ## Features
 
-- **Git Tag Analysis**: Identifies the latest version based on git tags, aligning with SemVer tagging practices.
-- **Branch-Specific Versioning**: Generates versions according to the GitFlow branch type:
-  - Feature branches result in pre-release versions.
-  - Release branches trigger minor or patch version increments.
-  - Hotfix branches may result in patch version increments.
-- **Initial Versioning for New Projects**: Defaults to `0.1.0` for repositories without previous tags, facilitating a standardized starting point.
-- **JIRA Card ID Integration**: Enhances version strings with JIRA card IDs from branch names, providing traceability.
-- **Version Compliance**: Validates generated versions against SemVer 2.0, Docker tag, and OCI tag standards.
+- **Git Tag Analysis**: Determines the most recent version tag, ensuring alignment with SemVer practices.
+- **Dynamic Version Generation**: Automates version number creation based on the commit context, supporting the linear history characteristic of trunk-based development.
+- **Initial Project Versioning**: Provides a default starting version (`0.1.0`) for new projects, establishing a clear versioning baseline.
+- **JIRA Card ID Integration**: Optionally incorporates JIRA card IDs from commit messages or branch names into the version, enhancing traceability.
+- **Version Validation**: Confirms that the generated version complies with Semantic Versioning 2.0, Docker tag, and OCI tag standards.
 
 ## Inputs
 
-| Input              | Description                                        | Required | Default |
-|--------------------|----------------------------------------------------|----------|---------|
-| `test_version_tag` | Test version tag for testing or simulation.        | No       | ''      |
-| `test_branch_name` | Test branch name for testing or simulation         | No       | ''      |
+| Input              | Description                                  | Required | Default |
+|--------------------|----------------------------------------------|----------|---------|
+| `test_version_tag` | Test version tag for simulations.            | No       | ''      |
+| `test_branch_name` | Test branch name for simulations.            | No       | ''      |
 
 ## Outputs
 
-| Output    | Description                             |
-|-----------|-----------------------------------------|
-| `version` | The computed SemVer-compatible string.  |
+| Output    | Description                               |
+|-----------|-------------------------------------------|
+| `version` | The SemVer-compatible version string.     |
 
-## Usage with GitFlow and SemVer
+## Usage in Trunk-Based Development
 
 ### Pre-requisites
 
-- Initialize your project with GitFlow branching strategy.
-- Ensure the repository is checked out using `actions/checkout@v3` before this action.
+- Adopt a trunk-based development workflow.
+- Use `actions/checkout@v3` to check out the repository before running this action.
 
 ### Example Workflow
 
-This workflow demonstrates using the Compute Version action within a GitFlow and SemVer context:
+This example showcases how to compute and utilize a version string in a trunk-based development context:
 
 ```yaml
 name: Compute and Use Version
@@ -57,33 +54,22 @@ jobs:
         id: compute_version
         uses: ActionsCI/ComputeVersion@1.0.0
         with:
-          test_version_tag: '' # Optional: Specify for testing purposes
+          test_version_tag: '' # Optional
         
       - name: Use Computed Version
-        run: echo "Computed version: ${{ steps.compute_version.outputs.version }}"
-```
+        run: echo "Version: ${{ steps.compute_version.outputs.version }}"
+## Contributing
+Contributions to enhance "Compute Version" are welcome, especially those that further refine its support for trunk-based and SemVer practices.
 
-## Handling Different Branch Types in GitFlow
-* Feature Branches: Generate pre-release versions to indicate ongoing development.
-* Release Branches: Increment the version to the next minor or patch level, preparing for a stable release.
-* Hotfix Branches: Similar to release branches, hotfixes result in an immediate patch version increment to address urgent issues.
+## Support and Issues
+Encounter an issue or need assistance? Please file an issue in the GitHub repository's issue tracker.
 
-# Contributing
-Your contributions and suggestions are welcome to improve the integration and functionality of "Compute Version" within GitFlow and SemVer practices.
-
-# Support and Issues
-For support or to report issues, please open an issue in the GitHub repository's issue tracker.
-
-# License
-This action is released under the MIT License. See the LICENSE file in the repository for more details.
-
-# Donations
-This is an OpenSource projects. If this project brought value to your work please consider donating.
+## License
+This action is available under the MIT License. See LICENSE in the repository for more details.
 
 ## Support This Project
+If "Compute Version" adds value to your workflow, please consider supporting its development:
 
-If you find this project helpful and would like to support its development, consider making a donation. Any amount is greatly appreciated and will help ensure continued development and support.
-
-- **PayPal**: [Donate via PayPal.me](https://www.paypal.com/paypalme/my/profile)
-- **Cryptocurrency**: Eth Address - `0xbB767477D28560672BE7b2E2270c70F80F9341eE`
-
+PayPal: Donate via PayPal.me @ paypal.me/burninmedia
+Cryptocurrency: Ethereum Address - 0xbB767477D28560672BE7b2E2270c70F80F9341eE
+Your support is greatly appreciated and helps sustain ongoing development.
