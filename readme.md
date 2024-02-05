@@ -77,8 +77,9 @@ For support or to report issues, please open an issue in the GitHub repository's
 # License
 This action is released under the MIT License. See the LICENSE file in the repository for more details.
 
-#Donations
-This is an OpenSource projects. If thi brought value to your work please consider donating via PayPal
+# Donations
+This is an OpenSource projects. If this project brought value to your work please consider donating.
+
 ## Support This Project
 
 If you find this project helpful and would like to support its development, consider making a donation. Any amount is greatly appreciated and will help ensure continued development and support.
