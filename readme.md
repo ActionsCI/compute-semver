@@ -1,25 +1,35 @@
+Your README.md is well-structured and informative, providing clear insights into the purpose and usage of the "Compute Version" GitHub Action within a trunk-based development context. Here's an optimized version with minor enhancements for clarity and formatting:
+
+```markdown
 # Compute Version GitHub Action
 
-"Compute Version" is a GitHub Action designed to facilitate version computation in CI/CD pipelines, leveraging branch names and git tags. This action is optimized for projects utilizing trunk-based development practices and adhering to Semantic Versioning (SemVer), dynamically generating version numbers to streamline deployments and releases.
+"Compute Version" is a GitHub Action designed to automate version computation in CI/CD pipelines, utilizing branch names and git tags. Optimized for projects using trunk-based development practices and adhering to Semantic Versioning (SemVer), it dynamically generates version numbers to streamline deployments and releases.
 
 ## Trunk-Based Development and SemVer
 
-This action supports trunk-based development, a strategy that involves frequent merges to a single branch (often `main` or `master`). Combined with SemVer, it ensures consistent and meaningful version increments, aligning version management with continuous integration principles.
+This action excels in environments that favor trunk-based development, where frequent merges are made to a single branch, typically `main` or `master`. By integrating with SemVer, it promotes consistent and meaningful version increments, ensuring version management aligns with continuous integration principles.
+
+We support branches prefixed for various stages:
+- `feature/(optional Jira card ID)`
+- `develop`
+- `main`
+
+While other branch names can be used, `develop` and `main` are designated for development builds and production builds, respectively.
 
 ## Features
 
-- **Git Tag Analysis**: Determines the most recent version tag, ensuring alignment with SemVer practices.
-- **Dynamic Version Generation**: Automates version number creation based on the commit context, supporting the linear history characteristic of trunk-based development.
-- **Initial Project Versioning**: Provides a default starting version (`0.1.0`) for new projects, establishing a clear versioning baseline.
-- **JIRA Card ID Integration**: Optionally incorporates JIRA card IDs from commit messages or branch names into the version, enhancing traceability.
-- **Version Validation**: Confirms that the generated version complies with Semantic Versioning 2.0, Docker tag, and OCI tag standards.
+- **Git Tag Analysis**: Identifies the latest version tag to align with SemVer practices.
+- **Dynamic Version Generation**: Creates version numbers based on the commit context, suitable for trunk-based development's linear history.
+- **Initial Project Versioning**: Sets a default version (`0.1.0`) for new projects, providing a standardized versioning starting point.
+- **JIRA Card ID Integration**: Optionally includes JIRA card IDs from commit messages or branch names in the version, enhancing traceability.
+- **Version Validation**: Ensures the generated version adheres to Semantic Versioning 2.0, Docker tag, and OCI tag standards.
 
 ## Inputs
 
-| Input              | Description                                  | Required | Default |
-|--------------------|----------------------------------------------|----------|---------|
-| `test_version_tag` | Test version tag for simulations.            | No       | ''      |
-| `test_branch_name` | Test branch name for simulations.            | No       | ''      |
+| Input             | Description                                | Required | Default |
+|-------------------|--------------------------------------------|----------|---------|
+| `test_version_tag`| Test version tag for simulations.          | No       | ''      |
+| `test_branch_name`| Test branch name for simulations.          | No       | ''      |
 
 ## Outputs
 
@@ -31,12 +41,10 @@ This action supports trunk-based development, a strategy that involves frequent 
 
 ### Pre-requisites
 
-- Adopt a trunk-based development workflow.
-- Use `actions/checkout@v3` to check out the repository before running this action.
+- Ensure your project follows a trunk-based development workflow.
+- Check out the repository using `actions/checkout@v3` before executing this action.
 
 ### Example Workflow
-
-This example showcases how to compute and utilize a version string in a trunk-based development context:
 
 ```yaml
 name: Compute and Use Version
@@ -54,22 +62,29 @@ jobs:
         id: compute_version
         uses: ActionsCI/ComputeVersion@1.0.0
         with:
-          test_version_tag: '' # Optional
+          test_version_tag: '' # Optional for testing purposes
         
       - name: Use Computed Version
-        run: echo "Version: ${{ steps.compute_version.outputs.version }}"
+        run: echo "Computed version: ${{ steps.compute_version.outputs.version }}"
+```
+
 ## Contributing
-Contributions to enhance "Compute Version" are welcome, especially those that further refine its support for trunk-based and SemVer practices.
+
+Your contributions and suggestions are highly valued. They help refine and enhance "Compute Version," making it more versatile for trunk-based development and SemVer practices.
 
 ## Support and Issues
-Encounter an issue or need assistance? Please file an issue in the GitHub repository's issue tracker.
+
+Encountered an issue or need assistance? Please open an issue in the [GitHub repository's issue tracker](#).
 
 ## License
-This action is available under the MIT License. See LICENSE in the repository for more details.
+
+"Compute Version" is released under the MIT License. For more details, see the [LICENSE](LICENSE) file in the repository.
 
 ## Support This Project
-If "Compute Version" adds value to your workflow, please consider supporting its development:
 
-PayPal: Donate via PayPal.me @ paypal.me/burninmedia
-Cryptocurrency: Ethereum Address - 0xbB767477D28560672BE7b2E2270c70F80F9341eE
-Your support is greatly appreciated and helps sustain ongoing development.
+If "Compute Version" brings value to your workflow, consider supporting its development:
+
+- **PayPal**: [Donate via PayPal.me](https://paypal.me/burninmedia)
+- **Cryptocurrency**: Ethereum Address - `0xbB767477D28560672BE7b2E2270c70F80F9341eE`
+
+Your support is greatly appreciated and contributes to ongoing development.
