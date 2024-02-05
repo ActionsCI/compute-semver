@@ -24,142 +24,47 @@ runs:
       id: compute-version
       run: |
         # Initialize variables
-        initialVersion=false
         branchName="${{ inputs.test_branch_name }}"
         if [[ -z "$branchName" ]]; then
           branchName=$(git rev-parse --abbrev-ref HEAD)
         fi
-        
-        test_version_tag="${{ inputs.test_version_tag }}"
-        test_branch_name="${{ inputs.test_branch_name }}"
-        #if test vars set then set test_mode=true
-        if [[ -n "$test_version_tag" || -n "$test_branch_name" ]]; then
-          test_mode=true
-        else
-          test_mode=false
-        fi
-        
-        # echo out test vars for debugging
-        echo "test_version_tag: ${test_version_tag}"
-        echo "test_branch_name: ${test_branch_name}"
-        echo "Test mode: $test_mode"
-        echo "Branch name: $branchName"
-
 
         # Fetching all tags might be necessary if you haven't already fetched the tags
-        echo "Fetching all tags..."
         git fetch --tags
 
-        # Check if there are any version tags
-        echo "Checking for version tags..."
-        tagCount=$(git tag --list 'v*' | wc -l)
-        echo "Number of version tags found: $tagCount"
-
-        # Use the input test version if provided, otherwise look up the version
-        if [[ -n "${{ inputs.test_version_tag }}" ]]; then
-          latestVersion="${{ inputs.test_version_tag }}"
-          echo "Using input test version: $latestVersion"
-        else
-          if [[ "$tagCount" -eq 0 ]]; then
-            echo "No version tags found in the repository."
-            latestVersion="0.1.0" # SemVer initial version.
-            initialVersion=true
-          else
-            latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
-            echo "Latest release version: $latestReleaseVersion"
-            latestVersion="$latestReleaseVersion"
-          fi
+        # Determine the latest version or use the test version if provided
+        latestVersion=$(git describe --tags --match "v*" --abbrev=0 --first-parent 2>/dev/null | sed 's/^v//')
+        if [[ -z "$latestVersion" ]]; then
+          echo "No version tags found in the repository."
+          latestVersion="0.1.0" # SemVer initial version.
         fi
-        echo "Latest version: '$latestVersion', initial version: '$initialVersion'"
 
-        # Extracting the short SHA from the latest commit
-        shortSHA=$(git rev-parse --short HEAD)
-        echo "Short SHA: $shortSHA"
+        # Extract the major, minor, and patch components
+        IFS='.' read -r major minor patch <<< "$latestVersion"
 
-        # Extract and increment the base version for new work
-        if [[ "$initialVersion" == true ]]; then
-          echo "Setting base version to the latest version"
-          baseVersion="${latestVersion}"
-        else
-          echo "Incrementing base version for new work..."
-          # Split the version by '+' to separate the semantic version from build metadata, if any
-          IFS='+' read -ra VERSION_SPLIT <<< "$latestVersion"
-          semanticVersion="${VERSION_SPLIT[0]}"
-
-          # Now split the semantic version to increment the patch version
-          IFS='.' read -ra VER <<< "$semanticVersion"
-          major="${VER[0]}"
-          minor="${VER[1]}"
-          patch="${VER[2]}"
-
-          # Increment the patch version
-          nextPatch=$((patch + 1))
-          baseVersion="${major}.${minor}.${patch}"
-          nextBaseVersion="${major}.${minor}.${nextPatch}"
-        fi
-        echo "Base version for new work: $nextBaseVersion"
-
-
-        # Construct version postfix template based on branch type
-        versionPostfixTemplate=""
-        echo "Starting construction of version postfix template..."
-
+        # Increment version based on branch type
         case "$branchName" in
+          release/*)
+            ((patch++))
+            newVersion="v${major}.${minor}.${patch}"
+            ;;
+          develop)
+            # For the develop branch, increment the next patch version and add a pre-release identifier
+            nextPatch=$((patch + 1))
+            timestamp=$(date +%Y%m%d%H%M%S) # Or use `git rev-parse --short HEAD`
+            newVersion="${major}.${minor}.${nextPatch}-develop.${timestamp}"
+            ;;
           feature/*|bugfix/*|alpha/*|beta/*)
+            shortSHA=$(git rev-parse --short HEAD)
             jiraCardID=$(echo $branchName | grep -oP '(?<=/)[A-Z]+-\d+' || echo "")
-            if [[ -n "$jiraCardID" ]]; then
-              versionPostfixTemplate="-${branchName%%/*}.${jiraCardID}.${shortSHA}"
-            else
-              versionPostfixTemplate="-${branchName%%/*}.${shortSHA}"
-            fi
-            ;;
-          develop*)
-            versionPostfixTemplate="-develop.${shortSHA}"
-            ;;
-          release*)
-            versionPostfixTemplate=""  # Empty for initial release work; build number appended later if needed
+            newVersion="${major}.${minor}.${patch}-${jiraCardID:+$jiraCardID.}${shortSHA}"
             ;;
           *)
-            versionPostfixTemplate="-${branchName%%/*}.${shortSHA}"  # Default case for any other branch types
+            shortSHA=$(git rev-parse --short HEAD)
+            ((patch++))
+            newVersion="${major}.${minor}.${patch}-${shortSHA}"
             ;;
         esac
-        echo "Version postfix template: $versionPostfixTemplate"
 
-        # Construct the regex for matching existing tags
-        echo "Constructing regex to match existing build numbers..."
-        regexToMatch="${nextBaseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
-        echo "Regex to match: $regexToMatch"
-
-        # Ensure to assign a value to `matchingTags` to handle cases with no tags
-        matchingTags=$(git tag --list | grep -P "$regexToMatch" || echo "")
-
-        echo "Matching tags: $matchingTags"
-
-        # Use a conditional check to avoid errors when no tags are present
-        if [[ -z "$matchingTags" ]]; then
-          echo "No matching tags found."
-          currentBuildNumber=0
-        else
-          echo "Matching tags found: $matchingTags"
-          # Extract the highest build number from the matching tags
-          currentBuildNumber=$(echo "$matchingTags" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
-        fi
-
-        echo "Current build number: $currentBuildNumber"
-
-        # Determine the next build number
-        if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
-          nextBuildNumber=$((currentBuildNumber + 1))
-        else
-          nextBuildNumber='1'
-        fi
-        echo "Next build number: $nextBuildNumber"
-
-        # Correctly construct newVersion
-        if [[ "$branchName" == "release/"* && -z "$currentBuildNumber" ]]; then
-          newVersion="${nextBaseVersion}"  # No build number for the initial release build
-        else
-          newVersion="${nextBaseVersion}${versionPostfixTemplate}+${nextBuildNumber}"  # Append build number correctly for all cases
-        fi
         echo "Computed Version: $newVersion"
-        echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
+        echo "version=$newVersion" >> $GITHUB_OUTPUT
