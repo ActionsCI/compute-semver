@@ -104,7 +104,7 @@ runs:
 
         case "$branchName" in
           feature/*|bugfix/*|alpha/*|beta/*)
-            jiraCardID=$(echo $branchName | grep -oP '(?<=/)[A-Z]+-\d+' || echo "")
+            jiraCardID=$(echo $branchName | grep -oP '(?<=/)[A-Z]+-?\d+' | sed 's/[-_]//g' || echo "")
             if [[ -n "$jiraCardID" ]]; then
               versionPostfixTemplate="-${branchName%%/*}.${jiraCardID}.${shortSHA}"
             else
