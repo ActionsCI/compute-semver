@@ -50,27 +50,27 @@ runs:
         echo "Fetching all tags..."
         git fetch --tags
 
-        # Check if there are any version tags
-        echo "Checking for version tags..."
-        tagCount=$(git tag --list 'v*' | wc -l)
-        echo "Number of version tags found: $tagCount"
 
         # Use the input test version if provided, otherwise look up the version
-        if [[ -n "${{ inputs.test_version_tag }}" ]]; then
+        if [ "$test_mode" ]; then
           latestVersion="${{ inputs.test_version_tag }}"
           echo "Using input test version: $latestVersion"
+          initialVersion=true
         else
+          # Check if there are any version tags
+          echo "Checking for version tags..."
+          tagCount=$(git tag --list 'v*' | wc -l)
+          echo "Number of version tags found: $tagCount"
           if [[ "$tagCount" -eq 0 ]]; then
             echo "No version tags found in the repository."
             latestVersion="0.1.0" # SemVer initial version.
-            initialVersion=true
           else
             latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
             echo "Latest release version: $latestReleaseVersion"
-            latestVersion="$latestReleaseVersion"
+            latestVersion="${latestReleaseVersion}"
           fi
         fi
-        echo "Latest version: '$latestVersion', initial version: '$initialVersion'"
+        echo "Latest version: '$latestVersion'"
 
         # Extracting the short SHA from the latest commit
         shortSHA=$(git rev-parse --short HEAD)
@@ -79,7 +79,7 @@ runs:
         # Extract and increment the base version for new work
         if [[ "$initialVersion" == true ]]; then
           echo "Setting base version to the latest version"
-          baseVersion="${latestVersion}"
+          nextBaseVersion="${latestVersion}"
         else
           echo "Incrementing base version for new work..."
           # Split the version by '+' to separate the semantic version from build metadata, if any
