@@ -53,7 +53,8 @@ runs:
 
         # Use the input test version if provided, otherwise look up the version
         if [ "$test_mode" ]; then
-          latestVersion="${{ inputs.test_version_tag }}"
+           # Use the input test version and remove leading v if present
+          latestVersion=$(echo $test_version_tag | sed 's/^v//')
           echo "Using input test version: $latestVersion"
           initialVersion=true
         else
