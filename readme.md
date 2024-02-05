@@ -85,6 +85,5 @@ This is an OpenSource projects. If this project brought value to your work pleas
 If you find this project helpful and would like to support its development, consider making a donation. Any amount is greatly appreciated and will help ensure continued development and support.
 
 - **PayPal**: [Donate via PayPal.me](https://www.paypal.com/paypalme/my/profile)
-- **GitHub Sponsors**: [Become a Sponsor](YourGitHubSponsorsLink)
 - **Cryptocurrency**: Eth Address - `0xbB767477D28560672BE7b2E2270c70F80F9341eE`
 
