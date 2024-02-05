@@ -126,7 +126,7 @@ runs:
         echo "Version postfix template: $versionPostfixTemplate"
 
         # Construct the regex for matching existing tags
-        echo "Constructing regex to match existing build numbers..."
+        echo "Constructing regex to match existing build numbers... ${nextBaseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
         regexToMatch="${nextBaseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
         echo "Regex to match: $regexToMatch"
 
@@ -156,8 +156,7 @@ runs:
         echo "Next build number: $nextBuildNumber"
 
         # Correctly construct newVersion
-        if [[ "$branchName" == "release/"* ]]; then
-          newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  # Append build number correctly for all cases
-        fi
+        newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  # Append build number correctly for all cases
+        
         echo "Computed Version: $newVersion"
         echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
