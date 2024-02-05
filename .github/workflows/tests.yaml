@@ -26,7 +26,7 @@ jobs:
 
       - name: Test Version Calculation
         id: compute_version
-        uses: ActionsCI/compute-semver@feature/aci-1-initial-compute-semver
+        uses: ActionsCI/compute-semver@feature/inital-action-commit
         with:
           test_branch_name: ${{ env.TEST_BRANCH_NAME }}
           test_version_tag: ${{ matrix.test_version }}
