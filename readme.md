@@ -60,19 +60,26 @@ jobs:
         
       - name: Use Computed Version
         run: echo "Computed version: ${{ steps.compute_version.outputs.version }}"
-Handling Different Branch Types in GitFlow
-Feature Branches: Generate pre-release versions to indicate ongoing development.
-Release Branches: Increment the version to the next minor or patch level, preparing for a stable release.
-Hotfix Branches: Similar to release branches, hotfixes result in an immediate patch version increment to address urgent issues.
-Contributing
+## Handling Different Branch Types in GitFlow
+* Feature Branches: Generate pre-release versions to indicate ongoing development.
+* Release Branches: Increment the version to the next minor or patch level, preparing for a stable release.
+* Hotfix Branches: Similar to release branches, hotfixes result in an immediate patch version increment to address urgent issues.
+
+# Contributing
 Your contributions and suggestions are welcome to improve the integration and functionality of "Compute Version" within GitFlow and SemVer practices.
 
-Support and Issues
+# Support and Issues
 For support or to report issues, please open an issue in the GitHub repository's issue tracker.
 
-License
+# License
 This action is released under the MIT License. See the LICENSE file in the repository for more details.
 
+#Donations
+This is an OpenSource projects. If thi brought value to your work please consider donating via PayPal
+## Support This Project
 
+If you find this project helpful and would like to support its development, consider making a donation. Any amount is greatly appreciated and will help ensure continued development and support.
 
-
+- **PayPal**: [Donate via PayPal.me](https://www.paypal.com/paypalme/my/profile)
+- **GitHub Sponsors**: [Become a Sponsor](YourGitHubSponsorsLink)
+- **Cryptocurrency**: Eth Address - `0xbB767477D28560672BE7b2E2270c70F80F9341eE`
