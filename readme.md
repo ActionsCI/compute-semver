@@ -1,6 +1,3 @@
-Your README.md is well-structured and informative, providing clear insights into the purpose and usage of the "Compute Version" GitHub Action within a trunk-based development context. Here's an optimized version with minor enhancements for clarity and formatting:
-
-```markdown
 # Compute Version GitHub Action
 
 "Compute Version" is a GitHub Action designed to automate version computation in CI/CD pipelines, utilizing branch names and git tags. Optimized for projects using trunk-based development practices and adhering to Semantic Versioning (SemVer), it dynamically generates version numbers to streamline deployments and releases.
