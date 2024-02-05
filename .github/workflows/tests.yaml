@@ -1,18 +1,35 @@
-name: Test Compute Version Action
+name: Comprehensive Version Calculation Tests
 
 on: [push]
 
 jobs:
-  test-action:
+  test-semver:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: true
       matrix:
-        version_tag: ['1.2.3', '1.2.3-alpha.1', '1.2.3+20210101', '1.2.3-alpha.1+20210101']
+        branch_type: ['feature', 'develop', 'release'] #, 'bugfix', 'alpha', 'beta']
+        jira_card: ['', 'JIRA-123', 'JIRA1234']
+        test_version: ['v0.1.0', 'v1.2.3', 'v0.1.2', 'v1.0.0']
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Run Compute Version Action with Test Version Tag
-      uses: ./.github/actions/compute-version # Adjust the path to where your action is defined
-      with:
-        test_version_tag: ${{ matrix.version_tag }}
+      - name: Setup Test Branch Name
+        run: |
+          if [[ -z "${{ matrix.jira_card }}" ]]; then
+            TEST_BRANCH_NAME="${{ matrix.branch_type }}/no-jira-card"
+          else
+            TEST_BRANCH_NAME="${{ matrix.branch_type }}/${{ matrix.jira_card }}"
+          fi
+          echo "TEST_BRANCH_NAME=$TEST_BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Test Version Calculation
+        id: compute_version
+        uses: ActionsCI/compute-semver@feature/aci-1-initial-compute-semver
+        with:
+          test_branch_name: ${{ env.TEST_BRANCH_NAME }}
+          test_version_tag: ${{ matrix.test_version }}
+
+      - name: Output Computed Version
+        run: echo "Computed version for ${{ env.TEST_BRANCH_NAME }} with latest release version ${{ matrix.test_version }} is '${{ steps.compute_version.outputs.version }}'"
