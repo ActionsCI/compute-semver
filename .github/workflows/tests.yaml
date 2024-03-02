@@ -33,3 +33,31 @@ jobs:
 
       - name: Output Computed Version
         run: echo "Computed version for ${{ env.TEST_BRANCH_NAME }} with latest release version ${{ matrix.test_version }} is '${{ steps.compute_version.outputs.version }}'"
+        - name: Assert Computed Version
+        run: |
+          COMPUTED_VERSION="${{ steps.compute_version.outputs.version }}"
+          echo "Computed version: $COMPUTED_VERSION"
+          BASE_VERSION="1.0.1" # This should be dynamically determined based on your inputs and action logic
+          SHORT_SHA="xxxxxx" # Simplification for demonstration; in real tests, you might extract this from the action's output or use a placeholder
+      
+          # Example logic to build expected version prefix based on the matrix
+          if [[ "${{ matrix.branch_type }}" == "feature" ]]; then
+            if [[ -n "${{ matrix.jira_card }}" ]]; then
+              # Scenario with a JIRA card
+              JIRA_CARD_NORMALIZED=$(echo "${{ matrix.jira_card }}" | sed 's/-//g' | tr '[:lower:]' '[:upper:]')
+              EXPECTED_PREFIX="${BASE_VERSION}-feature${JIRA_CARD_NORMALIZED}-${SHORT_SHA}"
+            else
+              # Scenario without a JIRA card
+              EXPECTED_PREFIX="${BASE_VERSION}-feature-no-jira-card-${SHORT_SHA}"
+            fi
+          fi
+      
+          # Since we can't match the exact SHA or dynamic build number, we check the prefix and structure
+          if [[ "$COMPUTED_VERSION" == "$EXPECTED_PREFIX"* ]]; then
+            echo "✅ Assertion passed for ${{ env.TEST_BRANCH_NAME }} with version ${{ matrix.test_version }}"
+          else
+            echo "❌ Assertion failed for ${{ env.TEST_BRANCH_NAME }} with version ${{ matrix.test_version }}"
+            echo "Expected prefix: $EXPECTED_PREFIX"
+            exit 1
+          fi
+      
