@@ -33,7 +33,7 @@ jobs:
 
       - name: Output Computed Version
         run: echo "Computed version for ${{ env.TEST_BRANCH_NAME }} with latest release version ${{ matrix.test_version }} is '${{ steps.compute_version.outputs.version }}'"
-        - name: Assert Computed Version
+      - name: Assert Computed Version
         run: |
           COMPUTED_VERSION="${{ steps.compute_version.outputs.version }}"
           echo "Computed version: $COMPUTED_VERSION"
