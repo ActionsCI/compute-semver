@@ -57,7 +57,7 @@ runs:
             latestVersion=$(echo "$test_version_tag" | sed 's/^v//')
             echo "Using input test version: $latestVersion"
         else
-            # Check if there are any version tags and determine the latest
+            # Check if there are any short version tags M.m.p and determine the latest
             echo "Checking for version tags..."
             latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
             if [[ -z "$latestReleaseVersion" ]]; then
@@ -135,28 +135,29 @@ runs:
 
         echo "Matching tags: $matchingTags"
 
+        # write feature to add build increments, using shortsha for build numbers in MVP
         # Use a conditional check to avoid errors when no tags are present
-        if [[ -z "$matchingTags" ]]; then
-          echo "No matching tags found."
-          currentBuildNumber=0
-        else
-          echo "Matching tags found: $matchingTags"
-          # Extract the highest build number from the matching tags
-          currentBuildNumber=$(echo "$matchingTags" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
-        fi
+        # if [[ -z "$matchingTags" ]]; then
+        #   echo "No matching tags found."
+        #   currentBuildNumber=0
+        # else
+        #   echo "Matching tags found: $matchingTags"
+        #   # Extract the highest build number from the matching tags
+        #   currentBuildNumber=$(echo "$matchingTags" | sed 's/^.*+\([0-9]+\)$/\1/' | sort -nr | head -n 1)
+        # fi
 
-        echo "Current build number: $currentBuildNumber"
+        # echo "Current build number: $currentBuildNumber"
 
-        # Determine the next build number
-        if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
-          nextBuildNumber="+$((currentBuildNumber + 1))"
-        else
-          nextBuildNumber='+0'
-        fi
-        echo "Next build number: $nextBuildNumber"
+        # # Determine the next build number
+        # if [[ -n "$currentBuildNumber" && "$currentBuildNumber" -ge 1 ]]; then
+        #   nextBuildNumber="+$((currentBuildNumber + 1))"
+        # else
+        #   nextBuildNumber='+0'
+        # fi
+        # echo "Next build number: $nextBuildNumber"
 
-        # Correctly construct newVersion
-        newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  # Append build number correctly for all cases
+        # # Correctly construct newVersion
+        # newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  # Append build number correctly for all cases
         
         echo "Computed Version: $newVersion"
         echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
