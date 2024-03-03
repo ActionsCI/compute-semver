@@ -157,7 +157,7 @@ runs:
         # echo "Next build number: $nextBuildNumber"
 
         # # Correctly construct newVersion
-        # newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  # Append build number correctly for all cases
+        newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  # Append build number correctly for all cases
         
         echo "Computed Version: $newVersion"
         echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
