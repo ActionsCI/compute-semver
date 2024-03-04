@@ -91,13 +91,18 @@ runs:
 
         case "$branchName" in
           feature/*|bugfix/*|alpha/*|beta/*)
-            jiraCardID=$(echo $branchName | grep -oEi '[A-Z]+-?[0-9]+' | sed 's/[-_]//g' || echo "")
-            echo "JIRA Card ID: $jiraCardID"
-            if [[ ! -z "$jiraCardID" ]]; then
-              versionPostfixTemplate="-${branchName%%/*}${jiraCardID^^}-${shortSHA}"
+            # Assuming branchName is like "feature/JIRA-1234" or "featurejira1234"
+            jiraCardID=$(echo $branchName | grep -oE '[A-Z]+-?[0-9]+' | tr -d '-' || echo "")
+            if [[ -n "$jiraCardID" ]]; then
+              # Format: feature.jira1234
+              versionPostfixTemplate="-${branchName%%/*}.${jiraCardID}-${shortSHA}"
             else
+              # Just in case no JIRA card ID is found, fallback to branch name and SHA
               versionPostfixTemplate="-${branchName%%/*}-${shortSHA}"
             fi
+            # Remove any unwanted characters or formatting issues
+            versionPostfixTemplate=$(echo $versionPostfixTemplate | sed 's/\\//g' | tr -d '[:space:]')
+            echo "Version postfix template: $versionPostfixTemplate"
             ;;
           develop*)
             versionPostfixTemplate="-develop-${shortSHA}"
