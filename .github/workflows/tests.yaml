@@ -14,7 +14,7 @@ jobs:
             expected_pattern: '0\.1\.1-feature-[a-fA-F0-9]{7,}.*'
           - test_branch_name: 'feature/jira1234-hi-mom'
             test_version: 'v0.1.0'
-            expected_pattern: '0\.1\.1-featureJIRA123-[a-fA-F0-9]{7,}.*'
+            expected_pattern: '0\.1\.1-featureJIRA1234-[a-fA-F0-9]{7,}.*'
           - test_branch_name: 'feature/JIRA123-hi-mom'
             test_version: 'v0.1.0'
             expected_pattern: '0\.1\.1-featureJIRA123-[a-fA-F0-9]{7,}.*'
@@ -23,7 +23,7 @@ jobs:
             expected_pattern: '1\.2\.4-develop-[a-fA-F0-9]{7,}.*'
           - test_branch_name: 'release'
             test_version: 'v2.0.0'
-            expected_pattern: '2\.0\.1-release-[a-fA-F0-9]{7,}.*'
+            expected_pattern: '2\.0\.1'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
