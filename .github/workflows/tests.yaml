@@ -6,30 +6,47 @@ jobs:
   test-semver:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        branch_type: ['feature', 'develop', 'release'] #, 'bugfix', 'alpha', 'beta']
-        jira_card: ['', 'JIRA-123', 'JIRA1234']
-        test_version: ['v0.1.0', 'v1.2.3', 'v0.1.2', 'v1.0.0']
+        include:
+          - test_branch_name: 'feature'
+            test_version: 'v0.1.0'
+            expected_pattern: '0\.1\.1-feature-[a-fA-F0-9]{7,}.*'
+          - test_branch_name: 'feature/jira1234-hi-mom'
+            test_version: 'v0.1.0'
+            expected_pattern: '0\.1\.1-featureJIRA1234-[a-fA-F0-9]{7,}.*'
+          - test_branch_name: 'feature/JIRA123-hi-mom'
+            test_version: 'v0.1.0'
+            expected_pattern: '0\.1\.1-featureJIRA123-[a-fA-F0-9]{7,}.*'
+          - test_branch_name: 'develop'
+            test_version: 'v1.2.3'
+            expected_pattern: '1\.2\.4-develop-[a-fA-F0-9]{7,}.*'
+          - test_branch_name: 'release'
+            test_version: 'v2.0.0'
+            expected_pattern: '2\.0\.1'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Test Branch Name
-        run: |
-          if [[ -z "${{ matrix.jira_card }}" ]]; then
-            TEST_BRANCH_NAME="${{ matrix.branch_type }}/no-jira-card"
-          else
-            TEST_BRANCH_NAME="${{ matrix.branch_type }}/${{ matrix.jira_card }}"
-          fi
-          echo "TEST_BRANCH_NAME=$TEST_BRANCH_NAME" >> $GITHUB_ENV
+        uses: actions/checkout@v4
 
       - name: Test Version Calculation
         id: compute_version
-        uses: ActionsCI/compute-semver@${{ github.sha }}
+        uses: ./
         with:
-          test_branch_name: ${{ env.TEST_BRANCH_NAME }}
+          test_branch_name: ${{ matrix.test_branch_name }}
           test_version_tag: ${{ matrix.test_version }}
 
       - name: Output Computed Version
-        run: echo "Computed version for ${{ env.TEST_BRANCH_NAME }} with latest release version ${{ matrix.test_version }} is '${{ steps.compute_version.outputs.version }}'"
+        run: echo "Computed version for ${{ matrix.test_branch_name }} with latest release version ${{ matrix.test_version }} is '${{ steps.compute_version.outputs.version }}'"
+      - name: Assert Computed Version
+        run: |
+          COMPUTED_VERSION="${{ steps.compute_version.outputs.version }}"
+          EXPECTED_PATTERN="${{ matrix.expected_pattern }}"
+          echo "Computed version: $COMPUTED_VERSION"
+          echo "Expected pattern: $EXPECTED_PATTERN"
+      
+          if [[ "$COMPUTED_VERSION" =~ ^$EXPECTED_PATTERN$ ]]; then
+            echo "✅ Computed version matches the expected pattern."
+          else
+            echo "❌ Computed version does not match the expected pattern."
+            exit 1
+          fi
