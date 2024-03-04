@@ -107,7 +107,7 @@ runs:
             # Assuming branchName="feature/JIRA1234" or "feature/JIRA-1234"
             jiraCardID=$(echo $branchName | grep -oE '[A-Z]+-?[0-9]+' | sed 's/[-_]//g' || echo "")
             echo "JIRA Card ID: $jiraCardID"
-            if [[ -n "$jiraCardID" ]]; then
+            if [[ ! -z "$jiraCardID" ]]; then
               versionPostfixTemplate="-${branchName%%/*}${jiraCardID^^}-${shortSHA}"
             else
               versionPostfixTemplate="-${branchName%%/*}-${shortSHA}"
