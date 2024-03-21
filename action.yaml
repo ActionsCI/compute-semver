@@ -16,9 +16,6 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
     - name: Compute and Validate Version
       shell: bash
       id: compute-version
