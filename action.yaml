@@ -15,6 +15,7 @@ outputs:
     value: ${{ steps.compute-version.outputs.version }}
 runs:
   using: 'composite'
+  runs-on: ubuntu-20.04
   steps:
     - name: Compute and Validate Version
       shell: bash
