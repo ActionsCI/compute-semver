@@ -52,22 +52,8 @@ runs:
             echo "Using input test version: $latestVersion"
         else
             echo "Checking for version tags..."
-            /usr/bin/git --version
-            pwd
-            /usr/bin/git tag --sort=-v:refname
-            echo "/usr/bin/git tag --sort=-v:refname | grep '^v'"
-            /usr/bin/git tag --sort=-v:refname | grep '^v'
-            echo "/usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 "
-            /usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 
-            latestReleaseVersion=$(/usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
-            echo "Latest release version: '$latestReleaseVersion'"
-            if [[ -z "$latestReleaseVersion" ]]; then
-                echo "No version tags found in the repository."
-                latestVersion="0.1.0"
-            else
-                echo "Latest release version: $latestReleaseVersion"
-                latestVersion="$latestReleaseVersion"
-            fi
+            latestVersion=$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 | sed 's/^v//' || echo "0.1.0")
+            echo "Latest release version: '$latestVersion'"
         fi
         echo "Latest version: '$latestVersion'"
 
