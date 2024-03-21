@@ -55,6 +55,10 @@ runs:
             /usr/bin/git --version
             pwd
             /usr/bin/git tag --sort=-v:refname
+            echo "/usr/bin/git tag --sort=-v:refname | grep '^v'"
+            /usr/bin/git tag --sort=-v:refname | grep '^v'
+            echo "/usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 "
+            /usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 
             latestReleaseVersion=$(/usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
             echo "Latest release version: '$latestReleaseVersion'"
             if [[ -z "$latestReleaseVersion" ]]; then
