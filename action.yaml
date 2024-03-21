@@ -15,7 +15,6 @@ outputs:
     value: ${{ steps.compute-version.outputs.version }}
 runs:
   using: 'composite'
-  runs-on: ubuntu-20.04
   steps:
     - name: Compute and Validate Version
       shell: bash
@@ -54,6 +53,7 @@ runs:
         else
             echo "Checking for version tags..."
             latestReleaseVersion=$(git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
+            echo "Latest release version: '$latestReleaseVersion'"
             if [[ -z "$latestReleaseVersion" ]]; then
                 echo "No version tags found in the repository."
                 latestVersion="0.1.0"
