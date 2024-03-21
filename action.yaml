@@ -52,8 +52,7 @@ runs:
             echo "Using input test version: $latestVersion"
         else
             echo "Checking for version tags..."
-            latestVersion=$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 | sed 's/^v//' || echo "0.1.0")
-            [[ "$latestVersion" == "0.1.0" ]] && initialVersion=true
+            latestVersion=$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 | sed 's/^v//' || echo "0.1.0";initialVersion=true)
             echo "Latest release version: '$latestVersion'"
         fi
         echo "Latest version: '$latestVersion'"
