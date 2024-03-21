@@ -53,6 +53,8 @@ runs:
         else
             echo "Checking for version tags..."
             /usr/bin/git --version
+            pwd
+            /usr/bin/git tag --sort=-v:refname
             latestReleaseVersion=$(/usr/bin/git tag --sort=-v:refname | grep '^v' | head -n 1 | sed 's/^v//')
             echo "Latest release version: '$latestReleaseVersion'"
             if [[ -z "$latestReleaseVersion" ]]; then
