@@ -1,6 +1,18 @@
 name: 'Compute Version'
 description: 'Compute version based on branch name and git tags'
 inputs:
+  major_version:
+    description: 'Override major version (from cicd.yaml config.version.major)'
+    required: false
+    default: ''
+  minor_version:
+    description: 'Override minor version (from cicd.yaml config.version.minor)'
+    required: false
+    default: ''
+  release_branch:
+    description: 'The release branch name (produces clean semver with no postfix)'
+    required: false
+    default: 'main'
   test_version_tag:
     description: 'Optional test version tag for testing purposes'
     required: false
@@ -26,35 +38,56 @@ runs:
         if [[ -z "$branchName" ]]; then
           branchName=$(git rev-parse --abbrev-ref HEAD)
         fi
-        
+
         test_version_tag="${{ inputs.test_version_tag }}"
         test_branch_name="${{ inputs.test_branch_name }}"
-        #if test vars set then set test_mode=true
+        major_override="${{ inputs.major_version }}"
+        minor_override="${{ inputs.minor_version }}"
+        release_branch="${{ inputs.release_branch }}"
+
         if [[ -n "$test_version_tag" || -n "$test_branch_name" ]]; then
           test_mode=true
         else
           test_mode=false
         fi
-        
-        # echo out test vars for debugging
+
         echo "test_version_tag: ${test_version_tag}"
         echo "test_branch_name: ${test_branch_name}"
+        echo "major_override: ${major_override}"
+        echo "minor_override: ${minor_override}"
+        echo "release_branch: ${release_branch}"
         echo "Test mode: $test_mode"
         echo "Branch name: $branchName"
 
-        # Fetching all tags might be necessary if you haven't already fetched the tags
         echo "Fetching all tags..."
         git fetch --tags
 
-        # Use the input test version if provided, otherwise look up the version
+        # Resolve the latest version for the active major.minor series
         if [[ -n "$test_version_tag" ]]; then
-            latestVersion=$(echo "$test_version_tag" | sed 's/^v//')
-            echo "Using input test version: $latestVersion"
+          latestVersion=$(echo "$test_version_tag" | sed 's/^v//')
+          echo "Using input test version: $latestVersion"
+        elif [[ -n "$major_override" && -n "$minor_override" ]]; then
+          # Look for the highest patch tag in the configured major.minor series
+          echo "Using major/minor override: ${major_override}.${minor_override}"
+          series_latest=$(git tag --list \
+            | grep -E "^v?${major_override}\.${minor_override}\.[0-9]+$" \
+            | sort -V | tail -n 1 | sed 's/^v//')
+          if [[ -n "$series_latest" ]]; then
+            latestVersion="$series_latest"
+            echo "Latest tag in ${major_override}.${minor_override}.x series: $latestVersion"
+          else
+            latestVersion="${major_override}.${minor_override}.0"
+            initialVersion=true
+            echo "No tags found in ${major_override}.${minor_override}.x series, starting at $latestVersion"
+          fi
         else
-            echo "Checking for version tags..."
-            latestVersion=$(git tag --list | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 | sed 's/^v//' || echo "0.1.0";initialVersion=true)
-            echo "Latest release version: '$latestVersion'"
-            echo "Initial version: $initialVersion"
+          echo "Checking for version tags..."
+          latestVersion=$(git tag --list \
+            | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V | tail -n 1 | sed 's/^v//' \
+            || echo "0.1.0"; initialVersion=true)
+          echo "Latest release version: '$latestVersion'"
+          echo "Initial version: $initialVersion"
         fi
         echo "Latest version: '$latestVersion'"
 
@@ -73,7 +106,6 @@ runs:
           patch="${VER[2]}"
 
           nextPatch=$((patch + 1))
-          baseVersion="${major}.${minor}.${patch}"
           nextBaseVersion="${major}.${minor}.${nextPatch}"
         fi
         echo "Base version for new work: $nextBaseVersion"
@@ -81,28 +113,31 @@ runs:
         versionPostfixTemplate=""
         echo "Starting construction of version postfix template..."
 
-        case "$branchName" in
-          feature/*|bugfix/*|alpha/*|beta/*)
-            # Assuming branchName is like "feature/JIRA-1234" or "featurejira1234"
-            jiraCardID=$(echo $branchName | grep -oEi '[A-Z]+-?[0-9]+' | sed 's/[-_]//g' || echo "")
-            echo "JIRA Card ID: $jiraCardID"
-            if [[ ! -z "$jiraCardID" ]]; then
-              versionPostfixTemplate="-${branchName%%/*}${jiraCardID^^}-${shortSHA}"
-            else
-              # Just in case no JIRA card ID is found, fallback to branch name and SHA
+        # Check configured release branch first, then fall through to named patterns
+        if [[ "$branchName" == "$release_branch" ]]; then
+          versionPostfixTemplate=""
+        else
+          case "$branchName" in
+            feature/*|bugfix/*|alpha/*|beta/*)
+              jiraCardID=$(echo $branchName | grep -oEi '[A-Z]+-?[0-9]+' | sed 's/[-_]//g' || echo "")
+              echo "JIRA Card ID: $jiraCardID"
+              if [[ -n "$jiraCardID" ]]; then
+                versionPostfixTemplate="-${branchName%%/*}${jiraCardID^^}-${shortSHA}"
+              else
+                versionPostfixTemplate="-${branchName%%/*}-${shortSHA}"
+              fi
+              ;;
+            develop*)
+              versionPostfixTemplate="-develop-${shortSHA}"
+              ;;
+            release*)
+              versionPostfixTemplate=""
+              ;;
+            *)
               versionPostfixTemplate="-${branchName%%/*}-${shortSHA}"
-            fi
-            ;;
-          develop*)
-            versionPostfixTemplate="-develop-${shortSHA}"
-            ;;
-          release*)
-            versionPostfixTemplate=""  
-            ;;
-          *)
-            versionPostfixTemplate="-${branchName%%/*}-${shortSHA}"  
-            ;;
-        esac
+              ;;
+          esac
+        fi
         echo "Version postfix template: $versionPostfixTemplate"
 
         regexToMatch="${nextBaseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
@@ -111,7 +146,7 @@ runs:
         matchingTags=$(git tag --list | grep -P "$regexToMatch" || echo "")
         echo "Matching tags: $matchingTags"
 
-        newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"  
-        
+        newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"
+
         echo "Computed Version: $newVersion"
         echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT
