@@ -23,10 +23,13 @@ While other branch names can be used, `develop` and `main` are designated for de
 
 ## Inputs
 
-| Input             | Description                                | Required | Default |
-|-------------------|--------------------------------------------|----------|---------|
-| `test_version_tag`| Test version tag for simulations.          | No       | ''      |
-| `test_branch_name`| Test branch name for simulations.          | No       | ''      |
+| Input              | Description                                                                                                              | Required | Default |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------|----------|---------|
+| `major_version`    | Override major version (typically sourced from `cicd.yaml` `config.version.major`). Must be set together with `minor_version`. | No       | `''`    |
+| `minor_version`    | Override minor version (typically sourced from `cicd.yaml` `config.version.minor`). Must be set together with `major_version`. | No       | `''`    |
+| `release_branch`   | Branch name that produces a clean SemVer with no postfix. Set this if your trunk is not `main`.                          | No       | `main`  |
+| `test_version_tag` | Test-only override for the latest version lookup. Do not set in production.                                              | No       | `''`    |
+| `test_branch_name` | Test-only override for branch name detection. Do not set in production.                                                  | No       | `''`    |
 
 ## Outputs
 
@@ -57,7 +60,7 @@ jobs:
       
       - name: Compute Version
         id: compute_version
-        uses: ActionsCI/ComputeVersion@1.0.0
+        uses: ActionsCI/compute-semver@v1.0.2
         with:
           test_version_tag: '' # Optional for testing purposes
         
