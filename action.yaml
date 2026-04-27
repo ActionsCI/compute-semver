@@ -140,13 +140,7 @@ runs:
         fi
         echo "Version postfix template: $versionPostfixTemplate"
 
-        regexToMatch="${nextBaseVersion}${versionPostfixTemplate//./\\.}\+([0-9]+)$"
-        echo "Regex to match: $regexToMatch"
-
-        matchingTags=$(git tag --list | grep -P "$regexToMatch" || echo "")
-        echo "Matching tags: $matchingTags"
-
-        newVersion="${nextBaseVersion}${versionPostfixTemplate}${nextBuildNumber}"
+        newVersion="${nextBaseVersion}${versionPostfixTemplate}"
 
         echo "Computed Version: $newVersion"
         echo "version=$(echo $newVersion)" >> $GITHUB_OUTPUT

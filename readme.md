@@ -57,7 +57,7 @@ jobs:
       
       - name: Compute Version
         id: compute_version
-        uses: ActionsCI/ComputeVersion@1.0.0
+        uses: ActionsCI/compute-semver@v1.0.2
         with:
           test_version_tag: '' # Optional for testing purposes
         
